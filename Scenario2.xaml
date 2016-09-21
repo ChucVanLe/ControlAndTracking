@@ -120,6 +120,6 @@
                 </MenuFlyout>
             </Button.Flyout>
         </Button>
-        <Slider x:Name="slider" HorizontalAlignment="Left" Margin="449,372,-8,0" VerticalAlignment="Top" Width="839" Height="68" ValueChanged="slider_ValueChanged_1" Maximum="1200"/>
+        <Slider x:Name="slider" HorizontalAlignment="Left" Margin="449,372,-8,0" VerticalAlignment="Top" Width="839" Height="68" ValueChanged="slider_ValueChanged_1" Maximum="8000"/>
     </Grid>
 </Page>

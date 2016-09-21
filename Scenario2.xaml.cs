@@ -4396,6 +4396,8 @@ namespace PivotCS
 
             //imgAuto_airSpeed.RenderTransform
             imAlttitudeFull.Opacity = 1;
+            imAlttitudeFull.HorizontalAlignment = HorizontalAlignment.Left;
+            imAlttitudeFull.VerticalAlignment = VerticalAlignment.Top;
 
             imAlttitudeFull.Margin = new Windows.UI.Xaml.Thickness(-2358 + dConvertToTabletX + xCenter * 2, -798 + dConvertToTabletY + yCenter * 2 - 2 * top, 0, 0);
             BackgroundDisplay.Children.Add(imAlttitudeFull);
@@ -4479,43 +4481,26 @@ namespace PivotCS
             if (dAlttitude < 0) dAlttitude = 0;
             dAlttitude = Math.Round(dAlttitude, 1);
 
-            //yCenter = 225
-            //dAlttitude = 4000;
-            //if(TestText.Text != "")
-            //dAlttitude = Convert.ToDouble(TestText.Text);
-            double top, dAirSpeed_original = dAlttitude, t_cut;
-            t_cut = -(-1980.45) - dAlttitude * 0.416;
+            double top, t_cut;
+            t_cut = - dAlttitude * 0.4167;
             {
 
-                if (dAlttitude < 1006)
-                    top = -(-1980.45) - dAlttitude * 0.416;
-                else
-                {
-                    top = -(-1980.45) - 1006 * 0.416 - (dAlttitude - 1006) * 0.416 / 2;
-                    //t_cut = -(-1980.3) - dAlttitude * 0.4167;
-                }
 
-                //else top = -(-1103) - 105.0 * 4.16 - (dAlttitude - 105) * 4.168 / 2;
-
-                //top = -(-1103) - dAirSpeed * 4.16; đúng từ 0 đến 100
-                //top = -(-1103) - 105.0 * 4.16 - (dAirSpeed - 105) * 4.168 / 2; chạy ok từ 105 đến hết
+                top = - dAlttitude * 0.4167;
                 //Edit size of image
                 imAlttitudeFull.Height = 4560;
-                //muốn biết kích thước thì dùng paint, kích thước trong paint ;
-                //size 80 x 600;
-                //BackgroundDisplay.Children.Remove(imAlttitudeFull);
-                //imgAuto_test.Source = new BitmapImage(new Uri("ms-appx:///Assets/horizon.bmp"));
+
                 imAlttitudeFull.Width = 88;//Ảnh này hình vuông nên Width = Height = min(Height, Width)
 
 
                 imAlttitudeFull.Clip = new RectangleGeometry()
 
                 {
-                    Rect = new Rect(0, 2272 + t_cut, 88, 264)//các trên trung tâm y 100, dưới 100
+                    Rect = new Rect(0, 4250 + t_cut, 88, 264)//các trên trung tâm y 100, dưới 100
 
                 };
 
-                imAlttitudeFull.Margin = new Windows.UI.Xaml.Thickness(-2358 + dConvertToTabletX + xCenter * 2, -798 + dConvertToTabletY + yCenter * 2 - 2 * top, 0, 0);
+                imAlttitudeFull.Margin = new Windows.UI.Xaml.Thickness(xCenter - 45, yCenter - 4262 - top, 0, 0);
                 //BackgroundDisplay.Children.Add(imAlttitudeFull);
             }
 
@@ -5023,7 +5008,8 @@ namespace PivotCS
 
         private void slider_ValueChanged_1(object sender, RangeBaseValueChangedEventArgs e)
         {
-            Draw_Airspeed_full_optimize(slider.Value, 150 - 32 + i16EditPosition, 205);//ok500, 120
+            Draw_Alttitude_full_optimize(slider.Value, 550 + 88 / 2 + i16EditPosition * 17 / 6, 80);//ok
+            //Draw_Airspeed_full_optimize(slider.Value, 150 - 32 + i16EditPosition, 205);//ok500, 120
             //PitchAndRoll_Draw(slider.Value - 60, 30, 350 + i16EditPosition * 11 / 6, 210, 140, 50);//ok
             //ComPass_Setup_Rotate_Out(0, 350 + i16EditPosition * 11 / 6, 500, 120);//quay phần phía ngoài ok
         }
