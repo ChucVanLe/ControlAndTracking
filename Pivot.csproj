@@ -196,7 +196,15 @@
     <Content Include="..\..\..\SharedContent\media\windows-sdk.png">
       <Link>Assets\windows-sdk.png</Link>
     </Content>
+    <Content Include="Assets\airplane-icon.png" />
+    <Content Include="Assets\AltitudeFull.png" />
+    <Content Include="Assets\Compass_Rose_English_North.png" />
+    <Content Include="Assets\horizon.bmp" />
     <Content Include="Assets\khoadiendientu_edit.png" />
+    <Content Include="Assets\MyHome.png" />
+    <Content Include="Assets\Needle.png" />
+    <Content Include="Assets\Speed_full.PNG" />
+    <Content Include="Assets\Speed_Full_v2.png" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
