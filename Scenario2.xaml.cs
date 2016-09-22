@@ -2235,9 +2235,9 @@ namespace PivotCS
             //Draw
 
             PointCollection myPointCollection = new PointCollection();
-            myPointCollection.Add(new Point((x1 - xmin), (y1 - ymin)));
-            myPointCollection.Add(new Point(x2 - xmin, y2 - ymin));
-            myPointCollection.Add(new Point(x3 - xmin, y3 - ymin));
+            myPointCollection.Add(new Point(x1, y1));
+            myPointCollection.Add(new Point(x2, y2));
+            myPointCollection.Add(new Point(x3, y3));
             //myPointCollection.Add(new Point(0.025, 0.005 * sliderAdjSpeed.Value));
             //Polygon myPolygonAutoRemove = new Polygon();
             BackgroundDisplay.Children.Remove(myPolygonAutoRemove);
@@ -2251,10 +2251,10 @@ namespace PivotCS
             myPolygonAutoRemove.StrokeThickness = 1;
             //Xac định tọa độ -1856, -491 là dời về 0, 0
             //quá trình khảo sát trong vở
-            //myPolygonAutoRemove.Margin = new Windows.UI.Xaml.Thickness(-2158 + myPolygonAutoRemove.Width - (200 - 2 * xmin), -600 + myPolygonAutoRemove.Height, 0, 0);
-            //myPolygonAutoRemove.Margin = new Windows.UI.Xaml.Thickness(-2358 +  dConvertToTabletX + xmax + xmin, -600 + myPolygonAutoRemove.Height + 4 * sliderAdjSpeed.Value, 0, 0);
+            myPolygonAutoRemove.HorizontalAlignment = HorizontalAlignment.Left;
+            myPolygonAutoRemove.VerticalAlignment = VerticalAlignment.Top;
             //Quá trình khảo sát y và tính sai số
-            myPolygonAutoRemove.Margin = new Windows.UI.Xaml.Thickness(-2358 + dConvertToTabletX + xmax + xmin, -800 + dConvertToTabletY + ymax + ymin, 0, 0);
+            myPolygonAutoRemove.Margin = new Windows.UI.Xaml.Thickness(xmin, ymin, 0, 0);
             //myPolygonAutoRemove.Margin = new Windows.UI.Xaml.Thickness(-2060, -491, 0, 0);
             BackgroundDisplay.Children.Add(myPolygonAutoRemove);
 
@@ -2416,11 +2416,11 @@ namespace PivotCS
             RetangleAutoRemove3.Height = height;
             RetangleAutoRemove3.Width = width;
             RetangleAutoRemove3.Opacity = Opacity;
+            RetangleAutoRemove3.HorizontalAlignment = HorizontalAlignment.Left;
+            RetangleAutoRemove3.VerticalAlignment = VerticalAlignment.Top;
             //Xac định tọa độ
             RetangleAutoRemove3.Margin = new Windows.UI.Xaml.Thickness(
-                    -2358 + dConvertToTabletX + RetangleAutoRemove3.Width + StartX * 2, -798 + dConvertToTabletY + RetangleAutoRemove3.Height + StartY * 2, 0, 0);
-            //TestRetangle.Margin = new Windows.UI.Xaml.Thickness(
-            //-2358 + TestRetangle.Width + x * 2, -200, 0, 0);
+                    StartX, StartY, 0, 0);
             BackgroundDisplay.Children.Add(RetangleAutoRemove3);
         }
         //********************************************************************************
@@ -2607,7 +2607,7 @@ namespace PivotCS
             TxtDesignAutoRemove.Foreground = Blush;
             TxtDesignAutoRemove.Opacity = Opacity;
             //position of text left, top, right, bottom
-            TxtDesignAutoRemove.Margin = new Windows.UI.Xaml.Thickness(StartX - 70, StartY, 0, 0);
+            TxtDesignAutoRemove.Margin = new Windows.UI.Xaml.Thickness(StartX, StartY, 0, 0);
             BackgroundDisplay.Children.Add(TxtDesignAutoRemove);
         }
         //*****************************************************************
@@ -4163,15 +4163,12 @@ namespace PivotCS
         }
 
         //Vẽ hiển thị của cảm biến
-        Image imgAuto_airSpeed = new Image();
 
         //Speed từ 0 đến 1000km/h
         /////////////////////////////////////////////////////////////////
         Image imSpeedFull = new Image();
         public void AirSpeed_Image_full_Setup(double dAirSpeed, double xCenter, double yCenter)
         {
-            //double top = -dAirSpeed;
-            BackgroundDisplay.Children.Remove(imgAuto_airSpeed);
             //Edit size of image
             imSpeedFull.Height = 4934;
             //muốn biết kích thước thì dùng paint, kích thước trong paint;
@@ -4186,7 +4183,7 @@ namespace PivotCS
             imSpeedFull.VerticalAlignment = VerticalAlignment.Top;
             imSpeedFull.Margin = new Windows.UI.Xaml.Thickness(xCenter, yCenter, 0, 0);
             BackgroundDisplay.Children.Add(imSpeedFull);
-            //sliderAdjSpeed.ValueChanged += sliderAdjSpeed_ValueChanged;
+
             Speed_Draw_String_setup(dAirSpeed, xCenter + 32, yCenter - 125);//ok
             //Viết chữ Speed + đơn vị km/ h
             DrawString("Speed ", 30, new SolidColorBrush(Colors.Crimson), xCenter + 32 - 80, yCenter - 125 + 250 + 5, 0.8);
@@ -4231,88 +4228,32 @@ namespace PivotCS
         void Speed_Draw_String_setup(double Air_Speed, double PoinStart_X, double PoinStart_Y)
         {
 
-            SolidColorBrush BlushRectangle4 = new SolidColorBrush(Colors.Black);
-            SolidColorBrush BlushOfLine1 = new SolidColorBrush(Colors.White);
-            SolidColorBrush BlushOfString1 = new SolidColorBrush(Colors.White);
-
             //Tọa độ của Hình vẽ
             //Width, Height là độ rộng và cao của vạch xanh
-            double Width = 8, Height = 250;
-            //Draw BackGround độ đục là 1
-            //*************************************************************************
-            //Ve Cho mau den de ghi Airspeed
-            //Ngày 16/12/2015 15h52 đã test ok
-            /* font chu 16 rong 12 cao 16
-             * Config_Position = 12 de canh chinh vung mau den cho phu hop
-             * SizeOfString = 16 chu cao 16 rong 12
-             * chieu cao cua vùng đen 2 * Config_Position = 24
-             * Số 28 là độ rông của vùng đen bên trái, vùng đen lớn: DoRongVungDen >= (2 * độ rông của 1 chữ = 24)
-             * Số 15 là khoảng cách của chữ cách lề bên trái (bắt đầu đường gạch gạch)
-             * Bắt đầu của chữ là: i16StartStrAxisX =(Int16)(PoinStart_X + 15)
-             */
-            double SizeOfString = 24;
-            double I16FullScale = 60, So_Khoang_Chia = 6;
-            double iDoPhanGiai = I16FullScale / So_Khoang_Chia;
-            //1 ký tự rộng = SizeOfString * 3 / 4;
-            double Config_Position = 12, i16StartStrAxisX;
-            //double DoRongVungDen = Air_Speed.ToString().Length * (SizeOfString * 3 / 4);
-            double DoRongVungDen = 26;
+            double Width = 8;
+
             //Vì độ rộng của dấu . nhỏ hơn các ký tự còn lại nên ta chia 2 trường hợp
-            double DoRongVungDenRect = Air_Speed.ToString().Length * (SizeOfString * 0.6);
-            if (Air_Speed.ToString().IndexOf('.') != -1)
-            //Trong airspeed có dấu chấm
-            {
-                DoRongVungDenRect = (Air_Speed.ToString().Length - 1) * (SizeOfString * 0.6) + 5;
-                //10 là độ rông dấu chấm
-            }
-            if (Air_Speed.ToString().Length == 1)
-            //Tăng độ rộng màu đen
-            {
-                DoRongVungDenRect = 40;
-                //4 là độ rông dấu chấm
-            }
-            //Hình chữ nhật được căn lề phải
-            i16StartStrAxisX = (PoinStart_X - 41);
-            double StartXRect = (PoinStart_X - 10);
-            FillRect_AutoRemove3(BlushRectangle4, StartXRect - DoRongVungDenRect, PoinStart_Y - Config_Position - 1 +
-                (30 - Air_Speed % 10) * Height / 60, DoRongVungDenRect, Config_Position * 2, 1);
+            double DoRongVungDenRect = 62;
+            
+            FillRect_AutoRemove3(new SolidColorBrush(Colors.Black), PoinStart_X - 10 - DoRongVungDenRect, PoinStart_Y + 112, DoRongVungDenRect, 24, 1);
 
             //Vẽ mũi tên
             //Ngày 16/12/2015 15h52 đã test ok
             double x1, y1, x2, y2, x3, y3;
-            x1 = i16StartStrAxisX + DoRongVungDen;
-            y1 = PoinStart_Y - Config_Position +
-                (30 - Air_Speed % 10) * Height / 60;
+            x1 = PoinStart_X - 13;
+            y1 = PoinStart_Y + 112;
             x2 = x1;
-            y2 = y1 + Config_Position * 2;
+            y2 = y1 + 24;
             x3 = PoinStart_X + Width;
             y3 = (y1 + y2) / 2;
             Draw_TriAngle_Var(x1, y1, x2, y2, x3, y3);
 
-            //ghi chu len mau den, ghi hang nghin va hang tram (Int16)Air_Speed / 100
-            //Ngày 16/12/2015 15h56 đã test ok
-            //Cỡ chữ 20 bên map là cỡ chữ 16 bên System.Drawing
-            /* cỡ chữ SizeOfString = 16;
-             * Số -12 để canh chỉnh số cho phù hợp
-             * (Int16)Air_Speed % 100: Lấy phần chục và đơn vị tìm ra vị trí phù hợp
-             * Chữ số này nằm ở nửa trên cách đầu trên cùng ((Int16)Air_Speed / 100 * 100 + 300) 1 khoảng
-             * Số 300 là 1/2 của fullScale
-             * (300 - (Int16)Air_Speed % 100)
-             * đổi qua trục tọa độ * Height / 600, 600 la fullScale
-             * Chữ bắt đầu tại Point_X - Font_X / 4, Point_Y - Font_Y / 4
-             * Trung tam là PoinStart_Y + (300 - (Int16)Air_Speed % 100) * Height / I16FullScale
-             * Bắt đầu là PoinY - 16/ 4 = Trung tam - 16 / 2. 16 là cỡ chữ theo Y,
-             * PoiY = Trung Tâm + 12;
-             */
 
             //Cỡ chữ 20 bên map là cỡ chữ 16 bên System.Drawing
             //drawFont = new Font("Arial", SizeOfString);
             //-2 là độ dời chữ vào trong thích hợp
-            DrawStringAutoRemove(Air_Speed.ToString(), SizeOfString, BlushOfString1, i16StartStrAxisX - 0,
-                                PoinStart_Y - 15 + (30 - Air_Speed % 10) * Height / I16FullScale, 1);
-
-            //Còn bên Notepad++
-            //Khó quá bỏ qua
+            DrawStringAutoRemove(Air_Speed.ToString(), 24, new SolidColorBrush(Colors.White), PoinStart_X - 111,
+                                PoinStart_Y + 110, 1);
 
         }
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -4461,8 +4402,8 @@ namespace PivotCS
              */
 
             //drawFont = new Font("Arial", SizeOfString);
-            //DrawStringAutoRemove(Air_Speed.ToString(), SizeOfString, BlushOfString1, i16StartStrAxisX - 0,
-            //PoinStart_Y - 15 + (30 - Air_Speed % 10) * Height / I16FullScale, 1);
+
+
             //Chữ trong màu đen có chỉ số là 0
             Alt_SetupString_AutoRemove(0, dAirSpeed.ToString(), SizeOfString, whitePen, xCenter - 88 / 2 + 15,
                                 yCenter - 15 + (300 - dAirSpeed % 100) * Height / I16FullScale, 1);
@@ -4483,32 +4424,21 @@ namespace PivotCS
 
             double top, t_cut;
             t_cut = - dAlttitude * 0.4167;
+            top = -dAlttitude * 0.4167;
+            //Edit size of image
+            imAlttitudeFull.Height = 4560;
+
+            imAlttitudeFull.Width = 88;//Ảnh này hình vuông nên Width = Height = min(Height, Width)
+
+            imAlttitudeFull.Clip = new RectangleGeometry()
             {
+                Rect = new Rect(0, 4250 + t_cut, 88, 264)//các trên trung tâm y 100, dưới 100
 
+            };
 
-                top = - dAlttitude * 0.4167;
-                //Edit size of image
-                imAlttitudeFull.Height = 4560;
-
-                imAlttitudeFull.Width = 88;//Ảnh này hình vuông nên Width = Height = min(Height, Width)
-
-
-                imAlttitudeFull.Clip = new RectangleGeometry()
-
-                {
-                    Rect = new Rect(0, 4250 + t_cut, 88, 264)//các trên trung tâm y 100, dưới 100
-
-                };
-
-                imAlttitudeFull.Margin = new Windows.UI.Xaml.Thickness(xCenter - 45, yCenter - 4262 - top, 0, 0);
-                //BackgroundDisplay.Children.Add(imAlttitudeFull);
-            }
+            imAlttitudeFull.Margin = new Windows.UI.Xaml.Thickness(xCenter - 45, yCenter - 4262 - top, 0, 0);
 
             Alttitude_Draw_String_optimize(dAlttitude);
-            //Speed_Draw_Speed(dSpeed, 150, 100);
-
-            //Speed_Draw_String_optimize(dAirSpeed_original, 150, 100);
-            ///////////////////////////////////////////////////////////
 
         }
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -4520,7 +4450,6 @@ namespace PivotCS
                 Tb_Alt[0].Text = Alttitude.ToString() + ".0";
             else
                 Tb_Alt[0].Text = Alttitude.ToString();
-
 
         }
 
@@ -5008,7 +4937,8 @@ namespace PivotCS
 
         private void slider_ValueChanged_1(object sender, RangeBaseValueChangedEventArgs e)
         {
-            Draw_Alttitude_full_optimize(slider.Value, 550 + 88 / 2 + i16EditPosition * 17 / 6, 80);//ok
+            AirSpeed_Image_full_Setup(100.1, 150 - 32 + i16EditPosition, 80 + 125);//ok
+            //Draw_Alttitude_full_optimize(slider.Value, 550 + 88 / 2 + i16EditPosition * 17 / 6, 80);//ok
             //Draw_Airspeed_full_optimize(slider.Value, 150 - 32 + i16EditPosition, 205);//ok500, 120
             //PitchAndRoll_Draw(slider.Value - 60, 30, 350 + i16EditPosition * 11 / 6, 210, 140, 50);//ok
             //ComPass_Setup_Rotate_Out(0, 350 + i16EditPosition * 11 / 6, 500, 120);//quay phần phía ngoài ok
