@@ -23,7 +23,7 @@ namespace SDKTemplate
         List<Scenario> scenarios = new List<Scenario>
         {
             new Scenario() { Title="Home", ClassType=typeof(Scenario3)},
-            new Scenario() { Title="Login And Register", ClassType=typeof(Scenario2)},
+            new Scenario() { Title="Tracking", ClassType=typeof(Scenario2)},
             new Scenario() { Title="Tracking And Control Flight", ClassType=typeof(Scenario1)}
         };
     }
