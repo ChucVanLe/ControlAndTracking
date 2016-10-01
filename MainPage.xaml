@@ -77,9 +77,9 @@
             <RelativePanel>
                 <Frame x:Name="ScenarioFrame" Margin="0,5,0,0" RelativePanel.AlignTopWithPanel="True" RelativePanel.Above="StatusPanel"/>
                 <StackPanel x:Name="StatusPanel" Orientation="Vertical" RelativePanel.AlignBottomWithPanel="True">
-                    <TextBlock x:Name="StatusLabel" Margin="0,0,0,10" TextWrapping="Wrap" Text="Status:" />
+                    <!--<TextBlock x:Name="StatusLabel" Margin="0,0,0,10" TextWrapping="Wrap" Text="Status:" />-->
                     <Border x:Name="StatusBorder" Margin="0,0,0,0" Visibility="Collapsed" >
-                        <TextBlock x:Name="StatusBlock" FontWeight="Bold" MaxHeight="200" MinWidth="{Binding ElementName=Splitter, Path=ActualWidth}" TextTrimming="CharacterEllipsis"  Margin="20,10,10,20" TextWrapping="Wrap"/>
+                        <!--<TextBlock x:Name="StatusBlock" FontWeight="Bold" MaxHeight="200" MinWidth="{Binding ElementName=Splitter, Path=ActualWidth}" TextTrimming="CharacterEllipsis"  Margin="20,10,10,20" TextWrapping="Wrap"/>-->
                     </Border>
                 </StackPanel>
             </RelativePanel>

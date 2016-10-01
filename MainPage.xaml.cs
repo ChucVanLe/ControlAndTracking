@@ -36,6 +36,7 @@ namespace SDKTemplate
             // in order to call methods that are in this class.
             Current = this;
             SampleTitle.Text = FEATURE_NAME;
+            
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -97,10 +98,10 @@ namespace SDKTemplate
                     StatusBorder.Background = new SolidColorBrush(Windows.UI.Colors.Red);
                     break;
             }
-            StatusBlock.Text = strMessage;
+            //StatusBlock.Text = strMessage;
 
             // Collapse the StatusBlock if it has no text to conserve real estate.
-            StatusBorder.Visibility = (StatusBlock.Text != String.Empty) ? Visibility.Visible : Visibility.Collapsed;
+            //StatusBorder.Visibility = (StatusBlock.Text != String.Empty) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         async void Footer_Click(object sender, RoutedEventArgs e)
