@@ -389,7 +389,7 @@ namespace PivotCS
             Alttitude_Image_full_Setup(100.5, 550 + 88 / 2 + i16EditPosition * 17 / 6, 80);//ok
             Draw_Alttitude_full_optimize(0, 550 + 88 / 2 + i16EditPosition * 17 / 6, 80);//ok
             //Da can chinh 1/3
-            ComPass_Setup_Rotate_Out(0, 350 + i16EditPosition * 11 / 6, 500, 120);//quay phần phía ngoài ok
+            ComPass_Setup_Rotate_Out(0, 350 + i16EditPosition * 11 / 6, 490, 100);//quay phần phía ngoài ok
             //Da can chinh 1/3
             //VerticalSpeed_Setup(0, 550 + i16EditPosition * 17 / 6, 420);
 
@@ -2446,8 +2446,8 @@ namespace PivotCS
             DrawString("Heading", 24, new SolidColorBrush(Colors.Purple), dComPass_mid_X - dComPass_R + 65,
                 dComPass_mid_Y + dComPass_R + 5, 1);
 
-            DrawString("(degrees)", 24, new SolidColorBrush(Colors.Purple), dComPass_mid_X - dComPass_R + 60,
-                dComPass_mid_Y + dComPass_R + 5 + 30, 1);
+            //DrawString("(degrees)", 24, new SolidColorBrush(Colors.Purple), dComPass_mid_X - dComPass_R + 60,
+            //    dComPass_mid_Y + dComPass_R + 5 + 30, 1);
         }
 
         //*******************************************************************
@@ -2573,8 +2573,8 @@ namespace PivotCS
             //Image img_FliCom_Out = new Image();
             tab_display.Children.Remove(img_FliCom_Out);
             //Edit size of image
-            img_FliCom_Out.Height = 250;
-            img_FliCom_Out.Width = 250;
+            img_FliCom_Out.Height = 210;
+            img_FliCom_Out.Width = 210;
 
             //img_FliCom_Out.RenderTransform
             img_FliCom_Out.Opacity = 1;
@@ -2604,7 +2604,7 @@ namespace PivotCS
             img_FliCom_Out.HorizontalAlignment = Windows.UI.Xaml.HorizontalAlignment.Left;
             img_FliCom_Out.VerticalAlignment = Windows.UI.Xaml.VerticalAlignment.Top;
             img_FliCom_Out.Opacity = 0.8;
-            img_FliCom_Out.Margin = new Windows.UI.Xaml.Thickness(CenterX - 125, CenterY - 125, 0, 0);
+            img_FliCom_Out.Margin = new Windows.UI.Xaml.Thickness(CenterX - img_FliCom_Out.Height / 2, CenterY - img_FliCom_Out.Height / 2, 0, 0);
             tab_display.Children.Add(img_FliCom_Out);
 
         }
@@ -2625,8 +2625,8 @@ namespace PivotCS
             {
 
                 Angle = 360 - angle_Yaw,
-                CenterX = 125,
-                CenterY = 125
+                CenterX = 105,
+                CenterY = 105
             };
 
 
