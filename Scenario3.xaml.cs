@@ -178,7 +178,8 @@ namespace PivotCS
 
             //complete setup
             bSetup = true;
-
+            //setting tab
+            tab_setting_create_background();
 
         }
 
@@ -275,6 +276,7 @@ namespace PivotCS
             tblock_LatAndLon.Text = Math.Round(tappedGeoPosition.Latitude, 8).ToString()//Lấy 8 chữ số thập phân
                                     + ", " + Math.Round(tappedGeoPosition.Longitude, 8).ToString();//Lấy 8 chữ số thập phân
             //NotifyUser(status, NotifyType.StatusMessage);
+            lbox_postion.Items.Add(Math.Round(tappedGeoPosition.Latitude, 8).ToString() + ", " + Math.Round(tappedGeoPosition.Longitude, 8).ToString());
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>
@@ -403,7 +405,7 @@ namespace PivotCS
 
             ///////////////////////////////////////////////////////////////////
             //Add needle
-            AddNeedle(screenWidth - 35, screenHeight - 51 - 70);//screenWidth
+            AddNeedle(screenWidth - 35, screenHeight - 50 - 70);//screenWidth
 
         }
         //*************End Of Class inside class set up****************************************
@@ -425,7 +427,7 @@ namespace PivotCS
                 string aqs = SerialDevice.GetDeviceSelector();
                 var dis = await DeviceInformation.FindAllAsync(aqs);
 
-                //status.Text = "Select a device and connect";
+                status.Text = "Select a device and connect";
                 for (int i = 0; i < dis.Count; i++)
                 {
                     listOfDevices.Remove(dis[i]);
@@ -436,12 +438,12 @@ namespace PivotCS
                 }
 
                 DeviceListSource.Source = listOfDevices;
-                //comPortInput.IsEnabled = true;
+                comPortInput.IsEnabled = true;
                 ConnectDevices.SelectedIndex = -1;
             }
-            catch
+            catch (Exception ex)
             {
-                //status.Text = ex.Message;
+                status.Text = ex.Message;
             }
         }
 
@@ -455,7 +457,7 @@ namespace PivotCS
 
             if (selection.Count <= 0)
             {
-                //status.Text = "Select a device and connect";
+                status.Text = "Select a device and connect";
                 return;
             }
 
@@ -466,7 +468,7 @@ namespace PivotCS
                 serialPort = await SerialDevice.FromIdAsync(entry.Id);
 
                 // Disable the 'Connect' button 
-                //comPortInput.IsEnabled = false;
+                comPortInput.IsEnabled = false;
 
                 // Configure serial settings
                 serialPort.WriteTimeout = TimeSpan.FromMilliseconds(1);
@@ -477,6 +479,12 @@ namespace PivotCS
                 serialPort.DataBits = 8;
                 serialPort.Handshake = SerialHandshake.None;
 
+                // Display configured settings
+                status.Text = "Serial port configured successfully: ";
+                status.Text += serialPort.BaudRate + "-";
+                status.Text += serialPort.DataBits + "-";
+                status.Text += serialPort.Parity.ToString() + "-";
+                status.Text += serialPort.StopBits;
                 //Connect is successfull
                 bConnectOk = true;
                 // Create cancellation token object to close I/O operations when closing the device
@@ -489,9 +497,10 @@ namespace PivotCS
                 bt_DisConnect.IsEnabled = true;
                 Listen();
             }
-            catch
+            catch (Exception ex)
             {
-                //status.Text = ex.Message;
+                status.Text = ex.Message;
+                comPortInput.IsEnabled = true;
                 bt_Connect.IsEnabled = true;
                 bt_List_Com.IsEnabled = true;
             }
@@ -504,7 +513,7 @@ namespace PivotCS
         {
             try
             {
-
+                status.Text = "";
                 CancelReadTask();
                 CloseDevice();
                 ListAvailablePorts();
@@ -514,8 +523,9 @@ namespace PivotCS
                 bt_DisConnect.IsEnabled = false;
                 bConnectOk = false;
             }
-            catch
+            catch (Exception ex)
             {
+                status.Text = ex.Message;
             }
         }
         //**************************************************************************
@@ -620,7 +630,7 @@ namespace PivotCS
                 }
                 else
                 {
-                    //status.Text = ex.Message;
+                    status.Text = ex.Message;
                     //loi frame
                 }
 
@@ -731,7 +741,7 @@ namespace PivotCS
                 serialPort.Dispose();
             }
             serialPort = null;
-
+            comPortInput.IsEnabled = true;
             bt_List_Com.IsEnabled = true;
             //sendTextButton.IsEnabled = false;
             //rcvdText.Text = "";
@@ -1502,26 +1512,26 @@ namespace PivotCS
             {
 
                 dConvertToTabletX = 1366 - screenWidth;
-                dConvertToTabletY = 696 - screenHeight - 51;
+                dConvertToTabletY = 696 - screenHeight - 50;
 
 
                 myMap.Width = screenWidth;
-                myMap.Height = screenHeight - 51 + 2;
-                //MapBackground.Height = screenHeight - 51;
+                myMap.Height = screenHeight - 50 + 2;
+                //MapBackground.Height = screenHeight - 50;
             }
             //create background left
             FillRect_BackGround(new SolidColorBrush(Colors.DimGray), 0, 00, Width,
-            screenHeight - 51, 0.7);
+            screenHeight - 50, 0.7);
             //create background in bottom to write latitude and longtitude, zoom level
-            DrawLine(new SolidColorBrush(Colors.White), 12, Width, screenHeight - 51 - 22, screenWidth - 16, screenHeight - 51 - 22);//y axis: left
+            DrawLine(new SolidColorBrush(Colors.White), 12, Width, screenHeight - 50 - 22, screenWidth - 16, screenHeight - 50 - 22);//y axis: left
             //create border
             //FillRect_Border(new SolidColorBrush(Colors.WhiteSmoke), 300, -300, 30,
             //760, 0.7);
-            DrawLine(new SolidColorBrush(Colors.MidnightBlue), 12, 6, 0, 6, screenHeight - 51);//y axis: left
-            DrawLine(new SolidColorBrush(Colors.MidnightBlue), 16, Width, 0, Width, screenHeight - 51);//y axis mid
-            DrawLine(new SolidColorBrush(Colors.MidnightBlue), 16, screenWidth - 8, 0, screenWidth - 8, screenHeight - 51);//y axis right
+            DrawLine(new SolidColorBrush(Colors.MidnightBlue), 12, 6, 0, 6, screenHeight - 50);//y axis: left
+            DrawLine(new SolidColorBrush(Colors.MidnightBlue), 16, Width, 0, Width, screenHeight - 50);//y axis mid
+            DrawLine(new SolidColorBrush(Colors.MidnightBlue), 16, screenWidth - 8, 0, screenWidth - 8, screenHeight - 50);//y axis right
             DrawLine(new SolidColorBrush(Colors.MidnightBlue), 10, 0, 5, screenWidth, 5);//x axis top
-            DrawLine(new SolidColorBrush(Colors.MidnightBlue), 16, 0, screenHeight - 51 - 8, screenWidth, screenHeight - 51 - 8);//x axis bottom
+            DrawLine(new SolidColorBrush(Colors.MidnightBlue), 16, 0, screenHeight - 50 - 8, screenWidth, screenHeight - 50 - 8);//x axis bottom
             //create background 
             //FillRect_BackGround(new SolidColorBrush(Colors.White), 1236 - dConvertToTabletX, 0, 130,
             //768 - dConvertToTabletY, 0.7);
@@ -1536,32 +1546,32 @@ namespace PivotCS
             myMap.Margin = new Windows.UI.Xaml.Thickness(Width, 0, 0, 0);
             //move tblock_LatAndLon to bottom
             //show latitude and lontitude in bottom on screen
-            tblock_LatAndLon.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 220, screenHeight - 51 - 38, 00, 00);
+            tblock_LatAndLon.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 220, screenHeight - 50 - 38, 00, 00);
             tab_display.Children.Remove(tblock_LatAndLon);
             tab_display.Children.Add(tblock_LatAndLon);
             //move zoom level to bottom on screen
-            tblock_ZoomLevel.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 280, screenHeight - 51 - 38, 00, 00);
+            tblock_ZoomLevel.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 280, screenHeight - 50 - 38, 00, 00);
             tab_display.Children.Remove(tblock_ZoomLevel);
             tab_display.Children.Add(tblock_ZoomLevel);
             //move TimeNow to bottom on screen
-            //tblock_CurentTime.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 360, screenHeight - 51 - 38, 00, 00);
+            //tblock_CurentTime.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 360, screenHeight - 50 - 38, 00, 00);
             //tab_display.Children.Remove(tblock_CurentTime);
             //tab_display.Children.Add(tblock_CurentTime);
 
             //move tblock_Start_Timer to bottom on screen
-            tblock_Start_Timer.Margin = new Windows.UI.Xaml.Thickness(488, screenHeight - 51 - 38, 00, 00);
+            tblock_Start_Timer.Margin = new Windows.UI.Xaml.Thickness(488, screenHeight - 50 - 38, 00, 00);
             tab_display.Children.Remove(tblock_Start_Timer);
             //tab_display.Children.Add(tblock_Start_Timer);
             //move tblock_End_Timer to bottom on screen
-            tblock_End_Timer.Margin = new Windows.UI.Xaml.Thickness(853, screenHeight - 51 - 38, 00, 00);
+            tblock_End_Timer.Margin = new Windows.UI.Xaml.Thickness(853, screenHeight - 50 - 38, 00, 00);
             tab_display.Children.Remove(tblock_End_Timer);
             //tab_display.Children.Add(tblock_End_Timer);
             //move tblock_Current_Timer to bottom on screen
-            tblock_Current_Timer.Margin = new Windows.UI.Xaml.Thickness(679, screenHeight - 51 - 38, 00, 00);
+            tblock_Current_Timer.Margin = new Windows.UI.Xaml.Thickness(679, screenHeight - 50 - 38, 00, 00);
             tab_display.Children.Remove(tblock_Current_Timer);
             tab_display.Children.Add(tblock_Current_Timer);
             //move slider_AdjTime to bottom on screen
-            slider_AdjTime.Margin = new Windows.UI.Xaml.Thickness(488, screenHeight - 51 - 58, 00, 00);
+            slider_AdjTime.Margin = new Windows.UI.Xaml.Thickness(488, screenHeight - 50 - 58, 00, 00);
             tab_display.Children.Remove(slider_AdjTime);
             //tab_display.Children.Add(slider_AdjTime);
             tab_display.Children.Remove(ShowButton);
@@ -4237,6 +4247,11 @@ namespace PivotCS
             bAutoZoom = true;
         }
 
+        private void bt_Clear_Path_Click(object sender, RoutedEventArgs e)
+        {
+            lbox_postion.Items.Clear();
+        }
+
         /// <summary>
         /// turn off auto zoom mode
         /// </summary>
@@ -4255,7 +4270,7 @@ namespace PivotCS
         private void bt_device_connect_click(object sender, RoutedEventArgs e)
         {
             Connect_To_Com();
-            ConnectDevices.Opacity = 0;// don't dispay ConnectDevices
+            ConnectDevices.Opacity = 1;// don't dispay ConnectDevices
             //remove tblock_Start_Timer, tblock_End_Timer, slider_AdjTime when connect Com
             tab_display.Children.Remove(tblock_Start_Timer);
             tab_display.Children.Remove(tblock_End_Timer);
@@ -4299,6 +4314,54 @@ namespace PivotCS
         }
 
         //*********************************************************************************************
+        //02/10/2016------------------------------------------------------------------------------
+        //----------------setting----------------------------------------------------
+        Rectangle background_tab_setting = new Rectangle();
+        //**********************************************************************************************
+        /// <summary>
+        /// Vẽ Rectangle với bút vẽ brush tọa độ bắt đầu là (x, y) vè chiều rộng Width, chiều cao height
+        /// </summary>
+        /// <param name="brush"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        public void FillRect_BackGround_tab_setting(SolidColorBrush Blush, double StartX, double StartY, double width, double height, double Opacity)
+        {
+            tab_setting.Children.Remove(background_tab_setting);
+            background_tab_setting.Fill = Blush;
+            background_tab_setting.Height = height;
+            background_tab_setting.Width = width;
+            background_tab_setting.Opacity = Opacity;
+            background_tab_setting.HorizontalAlignment = HorizontalAlignment.Left;
+            background_tab_setting.VerticalAlignment = VerticalAlignment.Top;
+            //Xac định tọa độ
+            background_tab_setting.Margin = new Windows.UI.Xaml.Thickness(
+                                            StartX, StartY, 0, 0);            //TestRetangle.Margin = new Windows.UI.Xaml.Thickness(
+            //-2358 + TestRetangle.Width + x * 2, -200, 0, 0);
+            tab_setting.Children.Add(background_tab_setting);
+        }
+
+        void tab_setting_create_background()
+        {
+            //create background left
+            FillRect_BackGround_tab_setting(new SolidColorBrush(Colors.White), 0, 00, 250,
+            screenHeight - 50, 1.0);
+            tab_setting.Children.Remove(ConnectDevices);
+            tab_setting.Children.Add(ConnectDevices);
+            tab_setting.Children.Remove(comPortInput);
+            tab_setting.Children.Add(comPortInput);
+            tab_setting.Children.Remove(closeDevice);
+            tab_setting.Children.Add(closeDevice);
+            tab_setting.Children.Remove(status);
+            tab_setting.Children.Add(status);
+            
+            tab_setting.Children.Remove(tblock_ConnectDivice);
+            tab_setting.Children.Add(tblock_ConnectDivice);
+
+            lbox_postion.Width = screenWidth -44 - 1080;
+            bt_Clear_Path.Width = screenWidth - 44 - 1200;
+        }
         //end of class
     }
 

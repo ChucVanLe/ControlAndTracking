@@ -48,8 +48,26 @@
             <Pivot x:Name="pivot_menu" Background="BurlyWood">
 
                 <PivotItem Header="Setting" Margin="0, -5, 0, 0">
-                    <StackPanel x:Name="tab_setting">
-                        <Grid Height="664">
+                    <StackPanel >
+                        <Grid Height="664" x:Name="tab_setting" Background="Orchid">
+                            <!--UART-->
+                            <TextBlock x:Name="tblock_ConnectDivice" HorizontalAlignment="Left" Margin="10,100,0,0" TextWrapping="Wrap" Text="CONNECT DIVICE" FontSize="30" VerticalAlignment="Top" Foreground="Blue" FontWeight="Light"/>
+
+                            <ListBox x:Name="ConnectDevices" HorizontalAlignment="Left" Height="70" Margin="1,200,0,0" VerticalAlignment="Top" Width="250" RenderTransformOrigin="0.5,0.5"
+                                ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.HorizontalScrollBarVisibility="Visible" ItemsSource="{Binding Source={StaticResource DeviceListSource}}" Background="Blue">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Id}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Button x:Name="comPortInput" Content="Connect" Click="bt_device_connect_click" HorizontalAlignment="Left" Height="40" Margin="1,296,0,0" VerticalAlignment="Top" Width="111" Background="Blue"/>
+                            <Button x:Name="closeDevice" Content="Disconnect" Click="bt_device_disconnect_click" HorizontalAlignment="Left" Height="40" Margin="148,296,0,0" VerticalAlignment="Top" Width="103" Background="Red" RenderTransformOrigin="0.478,-0.478"/>
+                            <!--Send Data-->
+                            <TextBox x:Name="status" HorizontalAlignment="Left" IsReadOnly="True" Height="168" Margin="1,350,0,0" TextWrapping="Wrap" Text="Status" VerticalAlignment="Top" Width="250"
+                                ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" BorderBrush="White"/>
+
+                            <!--PID Controller-->
                             <TextBlock x:Name="tblock_LoadParameter" HorizontalAlignment="Left" Margin="400,50,0,0" TextWrapping="Wrap" Text="UPLOAD PARAMETER" FontSize="50" VerticalAlignment="Top" Foreground="Black" FontWeight="Bold"/>
                             <TextBlock x:Name="Roll_tblock_roll" HorizontalAlignment="Left" FontSize="24" Margin="351,186,0,0" TextWrapping="Wrap" Text="ROLL" VerticalAlignment="Top" Foreground="Black" FontWeight="Bold"/>
 
@@ -88,6 +106,9 @@
                             <TextBox x:Name="alt_tb_Kd" Background="Green" HorizontalAlignment="Left" Margin="931,356,0,0" TextWrapping="Wrap" Text="0.0" VerticalAlignment="Top" RenderTransformOrigin="-0.625,0.141" Width="97"/>
                             <TextBox x:Name="alt_tb_Setpoint" Background="Green" HorizontalAlignment="Left" Margin="931,416,0,0" TextWrapping="Wrap" Text="0.0" VerticalAlignment="Top" RenderTransformOrigin="-0.625,0.141" Width="97"/>
                             <Button x:Name="alt_bt_Upload" Content="Upload" HorizontalAlignment="Left" Margin="931,486,0,0" VerticalAlignment="Top" Width="97" Background="Green"/>
+                            <ListBox x:Name="lbox_postion" HorizontalAlignment="Left" Height="617" Margin="1080,47,0,0" Background="White" Foreground="Black" VerticalAlignment="Top" Width="217"/>
+                            <Button x:Name="bt_Upload_Path" Content="Upload Path" HorizontalAlignment="Left" Margin="1080,0,0,0" Background="Green" VerticalAlignment="Top" Width="115"/>
+                            <Button x:Name="bt_Clear_Path" Content="Clear Path" HorizontalAlignment="Left" Margin="1207,0,0,0" Background="Red" VerticalAlignment="Top" Width="166" Click="bt_Clear_Path_Click"/>
 
                         </Grid>
                     </StackPanel>
@@ -144,7 +165,7 @@
 
                             <!--list of com-->
                             <!--UART-->
-                            <ListBox x:Name="ConnectDevices" Opacity="0" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5"
+                            <ListBox x:Name="ConnectDevices1" Opacity="0" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5"
                         ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.HorizontalScrollBarVisibility="Visible" ItemsSource="{Binding Source={StaticResource DeviceListSource}}" Background="Green" Margin="628,270,0,0" Height="auto" Width="auto">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
