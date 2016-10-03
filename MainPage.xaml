@@ -49,7 +49,7 @@
                 </VisualState>
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
-        <SplitView x:Name="Splitter" IsPaneOpen="True" Grid.Column="1">
+        <SplitView x:Name="Splitter" IsPaneOpen="True" Grid.Column="1" Grid.ColumnSpan="2">
             <SplitView.Pane>
                 <RelativePanel Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
                     <StackPanel x:Name="HeaderPanel" Orientation="Horizontal">

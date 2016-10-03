@@ -82,7 +82,7 @@
 
                             <TextBox x:Name="roll_tb_Setpoint" Background="Green" HorizontalAlignment="Left" Margin="331,416,0,0" TextWrapping="Wrap" Text="0.0" VerticalAlignment="Top" RenderTransformOrigin="-0.625,0.141" Width="97"/>
                             <TextBlock x:Name="Roll_tblock_Setpoint" HorizontalAlignment="Left" Margin="263,422,0,0" TextWrapping="Wrap" Text="Setpoint" VerticalAlignment="Top" Foreground="Black"/>
-                            <Button x:Name="roll_bt_Upload" Content="Upload" HorizontalAlignment="Left" Margin="331,486,0,0" VerticalAlignment="Top" Width="97" Background="Green"/>
+                            <Button x:Name="roll_bt_Upload" Content="Upload" HorizontalAlignment="Left" Margin="331,486,0,0" VerticalAlignment="Top" Width="97" Background="Green" Click="roll_bt_Upload_Click"/>
 
                             <!--Pitch_________________________________________________________________________________________________________________________________-->
                             <TextBlock x:Name="pitch_tblock_pitch" HorizontalAlignment="Left" FontSize="24" Margin="545,186,0,0" TextWrapping="Wrap" Text="PITCH" VerticalAlignment="Top" Foreground="Black" FontWeight="Bold"/>

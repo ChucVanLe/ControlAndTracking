@@ -1529,7 +1529,7 @@ namespace PivotCS
             //760, 0.7);
             DrawLine(new SolidColorBrush(Colors.MidnightBlue), 12, 6, 0, 6, screenHeight - 50);//y axis: left
             DrawLine(new SolidColorBrush(Colors.MidnightBlue), 16, Width, 0, Width, screenHeight - 50);//y axis mid
-            DrawLine(new SolidColorBrush(Colors.MidnightBlue), 16, screenWidth - 8, 0, screenWidth - 8, screenHeight - 50);//y axis right
+            DrawLine(new SolidColorBrush(Colors.MidnightBlue), 16, screenWidth - 44 - 8, 0, screenWidth - 44 - 8, screenHeight - 50);//y axis right
             DrawLine(new SolidColorBrush(Colors.MidnightBlue), 10, 0, 5, screenWidth, 5);//x axis top
             DrawLine(new SolidColorBrush(Colors.MidnightBlue), 16, 0, screenHeight - 50 - 8, screenWidth, screenHeight - 50 - 8);//x axis bottom
             //create background 
@@ -4250,6 +4250,69 @@ namespace PivotCS
         private void bt_Clear_Path_Click(object sender, RoutedEventArgs e)
         {
             lbox_postion.Items.Clear();
+        }
+
+        private async void roll_bt_Upload_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (serialPort != null)
+                {
+                    // Create the DataWriter object and attach to OutputStream
+                    dataWriteObject = new DataWriter(serialPort.OutputStream);
+                    string data_need_tran = "0," + roll_tb_Kp.Text + ',' + roll_tb_Ki.Text + ','
+                                            + roll_tb_Kd.Text + ',' + roll_tb_Setpoint.Text;
+                    //Launch the WriteAsync task to perform the write
+                    await UploadDataToFlight(data_need_tran);
+                }
+                else
+                {
+                    status.Text = "Select a device and connect";
+                }
+            }
+            catch (Exception ex)
+            {
+                status.Text = "Upload_Click: " + ex.Message;
+            }
+            finally
+            {
+                // Cleanup once complete
+                if (dataWriteObject != null)
+                {
+                    dataWriteObject.DetachStream();
+                    dataWriteObject = null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// WriteAsync: Task that asynchronously writes data from the input text box 'sendText' to the OutputStream 
+        /// </summary>
+        /// <returns></returns>
+        private async Task UploadDataToFlight(string data_need_tran)
+        {
+            Task<UInt32> storeAsyncTask;
+
+            if (data_need_tran.Length != 0)
+            {
+                // Load the text from the sendText input text box to the dataWriter object
+                dataWriteObject.WriteString(data_need_tran);
+
+                // Launch an async task to complete the write operation
+                storeAsyncTask = dataWriteObject.StoreAsync().AsTask();
+
+                UInt32 bytesWritten = await storeAsyncTask;
+                if (bytesWritten > 0)
+                {
+                    status.Text = data_need_tran + '\n';
+                    status.Text += "Bytes written successfully!";
+                }
+                data_need_tran = "";
+            }
+            else
+            {
+                status.Text = "Enter the text you want to write and then click on 'WRITE'";
+            }
         }
 
         /// <summary>
