@@ -276,7 +276,8 @@ namespace PivotCS
             tblock_LatAndLon.Text = Math.Round(tappedGeoPosition.Latitude, 8).ToString()//Lấy 8 chữ số thập phân
                                     + ", " + Math.Round(tappedGeoPosition.Longitude, 8).ToString();//Lấy 8 chữ số thập phân
             //NotifyUser(status, NotifyType.StatusMessage);
-            lbox_postion.Items.Add(Math.Round(tappedGeoPosition.Latitude, 8).ToString() + ", " + Math.Round(tappedGeoPosition.Longitude, 8).ToString());
+            lbox_postion_lat.Items.Add(Math.Round(tappedGeoPosition.Latitude, 8).ToString());
+            lbox_postion_lon.Items.Add(Math.Round(tappedGeoPosition.Longitude, 8).ToString());
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>
@@ -1546,11 +1547,11 @@ namespace PivotCS
             myMap.Margin = new Windows.UI.Xaml.Thickness(Width, 0, 0, 0);
             //move tblock_LatAndLon to bottom
             //show latitude and lontitude in bottom on screen
-            tblock_LatAndLon.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 220, screenHeight - 50 - 38, 00, 00);
+            tblock_LatAndLon.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 44 - 220, screenHeight - 50 - 38, 00, 00);
             tab_display.Children.Remove(tblock_LatAndLon);
             tab_display.Children.Add(tblock_LatAndLon);
             //move zoom level to bottom on screen
-            tblock_ZoomLevel.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 280, screenHeight - 50 - 38, 00, 00);
+            tblock_ZoomLevel.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 44- 280, screenHeight - 50 - 38, 00, 00);
             tab_display.Children.Remove(tblock_ZoomLevel);
             tab_display.Children.Add(tblock_ZoomLevel);
             //move TimeNow to bottom on screen
@@ -4249,7 +4250,8 @@ namespace PivotCS
 
         private void bt_Clear_Path_Click(object sender, RoutedEventArgs e)
         {
-            lbox_postion.Items.Clear();
+            lbox_postion_lat.Items.Clear();
+            lbox_postion_lon.Items.Clear();
         }
 
         private async void roll_bt_Upload_Click(object sender, RoutedEventArgs e)
@@ -4261,7 +4263,13 @@ namespace PivotCS
                     // Create the DataWriter object and attach to OutputStream
                     dataWriteObject = new DataWriter(serialPort.OutputStream);
                     string data_need_tran = "0," + roll_tb_Kp.Text + ',' + roll_tb_Ki.Text + ','
-                                            + roll_tb_Kd.Text + ',' + roll_tb_Setpoint.Text;
+                                            + roll_tb_Kd.Text + ',' + roll_tb_Setpoint.Text +",";
+                    Int32 checksum = 0;
+                    for(int i = 0; i < data_need_tran.Length; i++)
+                    {
+                        checksum += data_need_tran[i];
+                    }
+                    data_need_tran = '!' + data_need_tran + checksum.ToString() +  '@';
                     //Launch the WriteAsync task to perform the write
                     await UploadDataToFlight(data_need_tran);
                 }
@@ -4312,6 +4320,144 @@ namespace PivotCS
             else
             {
                 status.Text = "Enter the text you want to write and then click on 'WRITE'";
+            }
+        }
+
+        private async void pitch_bt_Upload_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (serialPort != null)
+                {
+                    // Create the DataWriter object and attach to OutputStream
+                    dataWriteObject = new DataWriter(serialPort.OutputStream);
+                    string data_need_tran = "!1," + pitch_tb_Kp.Text + ',' + pitch_tb_Ki.Text + ','
+                                            + pitch_tb_Kd.Text + ',' + pitch_tb_Setpoint.Text + ",@";
+                    //Launch the WriteAsync task to perform the write
+                    await UploadDataToFlight(data_need_tran);
+                }
+                else
+                {
+                    status.Text = "Select a device and connect";
+                }
+            }
+            catch (Exception ex)
+            {
+                status.Text = "Upload_Click: " + ex.Message;
+            }
+            finally
+            {
+                // Cleanup once complete
+                if (dataWriteObject != null)
+                {
+                    dataWriteObject.DetachStream();
+                    dataWriteObject = null;
+                }
+            }
+        }
+
+        private async void yaw_bt_Upload_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (serialPort != null)
+                {
+                    // Create the DataWriter object and attach to OutputStream
+                    dataWriteObject = new DataWriter(serialPort.OutputStream);
+                    string data_need_tran = "!2," + yaw_tb_Kp.Text + ',' + yaw_tb_Ki.Text + ','
+                                            + yaw_tb_Kd.Text + ',' + yaw_tb_Setpoint.Text + ",@";
+                    //Launch the WriteAsync task to perform the write
+                    await UploadDataToFlight(data_need_tran);
+                }
+                else
+                {
+                    status.Text = "Select a device and connect";
+                }
+            }
+            catch (Exception ex)
+            {
+                status.Text = "Upload_Click: " + ex.Message;
+            }
+            finally
+            {
+                // Cleanup once complete
+                if (dataWriteObject != null)
+                {
+                    dataWriteObject.DetachStream();
+                    dataWriteObject = null;
+                }
+            }
+        }
+
+        private async void alt_bt_Upload_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (serialPort != null)
+                {
+                    // Create the DataWriter object and attach to OutputStream
+                    dataWriteObject = new DataWriter(serialPort.OutputStream);
+                    string data_need_tran = "!3," + alt_tb_Kp.Text + ',' + alt_tb_Ki.Text + ','
+                                            + alt_tb_Kd.Text + ',' + alt_tb_Setpoint.Text + ",@";
+                    //Launch the WriteAsync task to perform the write
+                    await UploadDataToFlight(data_need_tran);
+                }
+                else
+                {
+                    status.Text = "Select a device and connect";
+                }
+            }
+            catch (Exception ex)
+            {
+                status.Text = "Upload_Click: " + ex.Message;
+            }
+            finally
+            {
+                // Cleanup once complete
+                if (dataWriteObject != null)
+                {
+                    dataWriteObject.DetachStream();
+                    dataWriteObject = null;
+                }
+            }
+        }
+
+        private async void bt_Upload_Path_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (serialPort != null)
+                {
+                    // Create the DataWriter object and attach to OutputStream
+                    dataWriteObject = new DataWriter(serialPort.OutputStream);
+                    string temp_lat_lon = "";
+                    for(int index_list_lon_lat = 0; index_list_lon_lat < lbox_postion_lat.Items.Count; index_list_lon_lat++)
+                    {
+                        temp_lat_lon +=  'v' + lbox_postion_lat.Items[index_list_lon_lat].ToString()
+                                        + 'k' + lbox_postion_lon.Items[index_list_lon_lat].ToString();
+                    }
+                    string data_need_tran = "!4" + temp_lat_lon + "v@";
+
+                    //Launch the WriteAsync task to perform the write
+                    await UploadDataToFlight(data_need_tran);
+                }
+                else
+                {
+                    status.Text = "Select a device and connect";
+                }
+            }
+            catch (Exception ex)
+            {
+                status.Text = "Upload_Click: " + ex.Message;
+            }
+            finally
+            {
+                // Cleanup once complete
+                if (dataWriteObject != null)
+                {
+                    dataWriteObject.DetachStream();
+                    dataWriteObject = null;
+                }
             }
         }
 
@@ -4422,7 +4568,7 @@ namespace PivotCS
             tab_setting.Children.Remove(tblock_ConnectDivice);
             tab_setting.Children.Add(tblock_ConnectDivice);
 
-            lbox_postion.Width = screenWidth -44 - 1080;
+            lbox_postion_lon.Width = screenWidth -44 - 1202;
             bt_Clear_Path.Width = screenWidth - 44 - 1200;
         }
         //end of class
