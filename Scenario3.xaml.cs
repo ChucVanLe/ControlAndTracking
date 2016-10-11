@@ -146,6 +146,9 @@ namespace PivotCS
 
             this.DataContext = this;
             Dis_Setup();
+            init_timer_check_reply_from_flight_no_start(1000);
+            //test func
+            find_coefficient_a0a1a2a3(3, 10, 20, 15, 15, 60, 60, 88, 09);
 
         }
 
@@ -278,6 +281,9 @@ namespace PivotCS
             //NotifyUser(status, NotifyType.StatusMessage);
             lbox_postion_lat.Items.Add(Math.Round(tappedGeoPosition.Latitude, 8).ToString());
             lbox_postion_lon.Items.Add(Math.Round(tappedGeoPosition.Longitude, 8).ToString());
+
+            //draw path when user tap on maps
+            Draw_Path_When_Tap_On_Map(tappedGeoPosition.Latitude, tappedGeoPosition.Longitude, tappedGeoPosition.Altitude);
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>
@@ -1070,10 +1076,22 @@ namespace PivotCS
         {
             if (bConnectOk)
             {
-                if (strDataFromSerialPort.IndexOf('\r') != -1)//Bắt ký tự $
-                {
+                if (strDataFromSerialPort.IndexOf('\r') != -1)//Bắt ký tự '\r'
+                {//data from GPS, IMU
                     Data.Temp = FindTextInStr(strDataFromSerialPort, '\r');
                     processDataFull();
+                }
+                else//reply from flight when user tran parameter
+                {
+                    if (strDataFromSerialPort.IndexOf('@') != -1)//Bắt ký tự '@'
+                    {
+                        if ((code_send_data == strDataFromSerialPort[strDataFromSerialPort.IndexOf('@') - 2])
+                            && (6 == strDataFromSerialPort[strDataFromSerialPort.IndexOf('@') - 1]))//receive ACK
+                            send_data_success = true;
+                        else send_data_success = false;
+                        //remove reply from flight to receive data from GPS, IMU
+                        strDataFromSerialPort = strDataFromSerialPort.Remove(0, strDataFromSerialPort.IndexOf('@') + 1);
+                    }
                 }
             }
             else if (setupReadfile)//xu ly voi com
@@ -4252,17 +4270,39 @@ namespace PivotCS
         {
             lbox_postion_lat.Items.Clear();
             lbox_postion_lon.Items.Clear();
+            myMap.MapElements.Remove(Path_When_User_Tap);
+            positions_path_tap_on_map.Clear();
+            myMap.MapElements.Clear();
+            number_of_tap = 0;
+
         }
 
+        //variable for tran and receive reply from flight
+        bool send_data_success = false;
+        char code_send_data = '5';
+        string data_need_tran = "";
+        /// <summary>
+        /// update Kp, Ki, Kd, Setpoint of roll angle to flight
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void roll_bt_Upload_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 if (serialPort != null)
                 {
+                    //Validating whether a textbox contains only numbers
+                    double outParse;
+
+                    // Check if the point entered is numeric or not
+                    outParse = float.Parse(roll_tb_Kp.Text.Trim());
+                    outParse = float.Parse(roll_tb_Ki.Text.Trim());
+                    outParse = float.Parse(roll_tb_Kd.Text.Trim());
+                    outParse = float.Parse(roll_tb_Setpoint.Text.Trim());
                     // Create the DataWriter object and attach to OutputStream
                     dataWriteObject = new DataWriter(serialPort.OutputStream);
-                    string data_need_tran = "0," + roll_tb_Kp.Text + ',' + roll_tb_Ki.Text + ','
+                    data_need_tran = "0," + roll_tb_Kp.Text + ',' + roll_tb_Ki.Text + ','
                                             + roll_tb_Kd.Text + ',' + roll_tb_Setpoint.Text +",";
                     Int32 checksum = 0;
                     for(int i = 0; i < data_need_tran.Length; i++)
@@ -4270,8 +4310,13 @@ namespace PivotCS
                         checksum += data_need_tran[i];
                     }
                     data_need_tran = '!' + data_need_tran + checksum.ToString() +  '@';
+                    code_send_data = '0';
                     //Launch the WriteAsync task to perform the write
                     await UploadDataToFlight(data_need_tran);
+
+                    timer.Stop();
+                    //turn on timer check error
+                    init_timer_check_reply_from_flight(500);//500ms
                 }
                 else
                 {
@@ -4310,11 +4355,7 @@ namespace PivotCS
                 storeAsyncTask = dataWriteObject.StoreAsync().AsTask();
 
                 UInt32 bytesWritten = await storeAsyncTask;
-                if (bytesWritten > 0)
-                {
-                    status.Text = data_need_tran + '\n';
-                    status.Text += "Bytes written successfully!";
-                }
+
                 data_need_tran = "";
             }
             else
@@ -4329,12 +4370,31 @@ namespace PivotCS
             {
                 if (serialPort != null)
                 {
+                    //Validating whether a textbox contains only numbers
+                    double outParse;
+
+                    // Check if the point entered is numeric or not
+                    outParse = float.Parse(pitch_tb_Kp.Text.Trim());
+                    outParse = float.Parse(pitch_tb_Ki.Text.Trim());
+                    outParse = float.Parse(pitch_tb_Kd.Text.Trim());
+                    outParse = float.Parse(pitch_tb_Setpoint.Text.Trim());
                     // Create the DataWriter object and attach to OutputStream
                     dataWriteObject = new DataWriter(serialPort.OutputStream);
-                    string data_need_tran = "!1," + pitch_tb_Kp.Text + ',' + pitch_tb_Ki.Text + ','
-                                            + pitch_tb_Kd.Text + ',' + pitch_tb_Setpoint.Text + ",@";
+                    data_need_tran = "1," + pitch_tb_Kp.Text + ',' + pitch_tb_Ki.Text + ','
+                                            + pitch_tb_Kd.Text + ',' + pitch_tb_Setpoint.Text + ",";
+                    Int32 checksum = 0;
+                    for (int i = 0; i < data_need_tran.Length; i++)
+                    {
+                        checksum += data_need_tran[i];
+                    }
+                    data_need_tran = '!' + data_need_tran + checksum.ToString() + '@';
+                    code_send_data = '1';
                     //Launch the WriteAsync task to perform the write
                     await UploadDataToFlight(data_need_tran);
+
+                    //turn on timer check error
+                    timer.Stop();
+                    init_timer_check_reply_from_flight(500);//500ms
                 }
                 else
                 {
@@ -4362,12 +4422,31 @@ namespace PivotCS
             {
                 if (serialPort != null)
                 {
+                    //Validating whether a textbox contains only numbers
+                    double outParse;
+
+                    // Check if the point entered is numeric or not
+                    outParse = float.Parse(yaw_tb_Kp.Text.Trim());
+                    outParse = float.Parse(yaw_tb_Ki.Text.Trim());
+                    outParse = float.Parse(yaw_tb_Kd.Text.Trim());
+                    outParse = float.Parse(yaw_tb_Setpoint.Text.Trim());
                     // Create the DataWriter object and attach to OutputStream
                     dataWriteObject = new DataWriter(serialPort.OutputStream);
-                    string data_need_tran = "!2," + yaw_tb_Kp.Text + ',' + yaw_tb_Ki.Text + ','
-                                            + yaw_tb_Kd.Text + ',' + yaw_tb_Setpoint.Text + ",@";
+                    data_need_tran = "2," + yaw_tb_Kp.Text + ',' + yaw_tb_Ki.Text + ','
+                                            + yaw_tb_Kd.Text + ',' + yaw_tb_Setpoint.Text + ",";
+                    Int32 checksum = 0;
+                    for (int i = 0; i < data_need_tran.Length; i++)
+                    {
+                        checksum += data_need_tran[i];
+                    }
+                    data_need_tran = '!' + data_need_tran + checksum.ToString() + '@';
+                    code_send_data = '2';
                     //Launch the WriteAsync task to perform the write
                     await UploadDataToFlight(data_need_tran);
+
+                    //turn on timer check error
+                    timer.Stop();
+                    init_timer_check_reply_from_flight(500);//500ms
                 }
                 else
                 {
@@ -4395,12 +4474,31 @@ namespace PivotCS
             {
                 if (serialPort != null)
                 {
+                    //Validating whether a textbox contains only numbers
+                    double outParse;
+
+                    // Check if the point entered is numeric or not
+                    outParse = float.Parse(alt_tb_Kp.Text.Trim());
+                    outParse = float.Parse(alt_tb_Ki.Text.Trim());
+                    outParse = float.Parse(alt_tb_Kd.Text.Trim());
+                    outParse = float.Parse(alt_tb_Setpoint.Text.Trim());
                     // Create the DataWriter object and attach to OutputStream
                     dataWriteObject = new DataWriter(serialPort.OutputStream);
-                    string data_need_tran = "!3," + alt_tb_Kp.Text + ',' + alt_tb_Ki.Text + ','
-                                            + alt_tb_Kd.Text + ',' + alt_tb_Setpoint.Text + ",@";
+                    data_need_tran = "3," + alt_tb_Kp.Text + ',' + alt_tb_Ki.Text + ','
+                                            + alt_tb_Kd.Text + ',' + alt_tb_Setpoint.Text + ",";
+                    Int32 checksum = 0;
+                    for (int i = 0; i < data_need_tran.Length; i++)
+                    {
+                        checksum += data_need_tran[i];
+                    }
+                    data_need_tran = '!' + data_need_tran + checksum.ToString() + '@';
+                    code_send_data = '3';
                     //Launch the WriteAsync task to perform the write
                     await UploadDataToFlight(data_need_tran);
+
+                    //turn on timer check error
+                    timer.Stop();
+                    init_timer_check_reply_from_flight(500);//2s
                 }
                 else
                 {
@@ -4436,10 +4534,21 @@ namespace PivotCS
                         temp_lat_lon +=  'v' + lbox_postion_lat.Items[index_list_lon_lat].ToString()
                                         + 'k' + lbox_postion_lon.Items[index_list_lon_lat].ToString();
                     }
-                    string data_need_tran = "!4" + temp_lat_lon + "v@";
+                    Int32 checksum = 0;
+                    data_need_tran = "4" + temp_lat_lon + "v,";
+                    for (int i = 0; i < data_need_tran.Length; i++)
+                    {
+                        checksum += data_need_tran[i];
+                    }
+                    data_need_tran = '!' + data_need_tran + checksum.ToString() + '@';
+                    code_send_data = '4';
+                    //data_need_tran = "!4" + temp_lat_lon + "v@";
 
                     //Launch the WriteAsync task to perform the write
                     await UploadDataToFlight(data_need_tran);
+                    //turn on timer check error
+                    timer.Stop();
+                    init_timer_check_reply_from_flight(2000);//2s
                 }
                 else
                 {
@@ -4459,6 +4568,52 @@ namespace PivotCS
                     dataWriteObject = null;
                 }
             }
+        }
+
+        //---------receive reply from flight-----------check sum--------------------
+        /// <summary>
+        /// Timer to check reply from flight, second unit
+        /// </summary>
+        private void init_timer_check_reply_from_flight(UInt16 dPeriod)
+        {
+            // Start the polling timer.
+            timer = new DispatcherTimer() { Interval = TimeSpan.FromMilliseconds(dPeriod) };
+            timer.Tick += interrupt_timer_check_reply;
+            timer.Start();
+
+        }
+
+        //---------receive reply from flight-----------check sum--------------------
+        /// <summary>
+        /// Timer to check reply from flight, second unit
+        /// </summary>
+        private void init_timer_check_reply_from_flight_no_start(UInt16 dPeriod)
+        {
+            // Start the polling timer.
+            timer = new DispatcherTimer() { Interval = TimeSpan.FromMilliseconds(dPeriod) };
+            timer.Tick += interrupt_timer_check_reply;
+
+        }
+
+        /// <summary>
+        /// check error
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public void interrupt_timer_check_reply(object sender, object e)
+        {
+            if (send_data_success)
+            {
+                status.Text = data_need_tran + '\n';
+                status.Text += "Bytes written successfully!";
+                send_data_success = false;
+            }
+            else
+            {
+                status.Text = "Error!, Please try again";
+            }
+
+            timer.Stop();
         }
 
         /// <summary>
@@ -4500,7 +4655,6 @@ namespace PivotCS
             DisConnect_To_Com();
             ConnectDevices.Opacity = 1;//dispay ConnectDevices
         }
-
 
         /// <summary>
         /// pause simulation when offline mode
@@ -4570,6 +4724,106 @@ namespace PivotCS
 
             lbox_postion_lon.Width = screenWidth -44 - 1202;
             bt_Clear_Path.Width = screenWidth - 44 - 1200;
+        }
+
+        //Vẽ path when user tap on maps
+
+        Windows.UI.Xaml.Controls.Maps.MapPolyline Path_When_User_Tap = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
+        double old_lat_tap_on_map = 0, old_lon_tap_on_map;
+        int number_of_tap = 0;
+        List<BasicGeoposition> positions_path_tap_on_map = new List<BasicGeoposition>();
+        /// <summary>
+        /// Chấm điểm có màu vàng tại vị trí lat, lon, Alt
+        /// Vẽ vị trí máy bay và góc quay của máy bay
+        /// Vẽ đường thẳng nối tới điểm đích
+        /// </summary>
+        /// <param name="lat"></param>
+        /// <param name="lon"></param>
+        /// <param name="alt"></param>
+        /// <param name="dHeading"></param>
+        void Draw_Path_When_Tap_On_Map(double lat, double lon, double alt)
+        {
+
+
+            MapIcon icon_tap_on_map = new MapIcon();
+            icon_tap_on_map.Location = new Geopoint(new BasicGeoposition()
+            {
+                Latitude = lat,
+                Longitude = lon,
+                Altitude = alt
+            });
+            icon_tap_on_map.NormalizedAnchorPoint = new Point(0.5, 1.0);
+            icon_tap_on_map.Title = "Pos " + (++number_of_tap).ToString();
+            myMap.MapElements.Add(icon_tap_on_map);
+
+
+            Path_When_User_Tap.StrokeColor = Colors.Green;
+            Path_When_User_Tap.StrokeThickness = 2;
+            Path_When_User_Tap.StrokeDashed = true;//nét đứt
+
+            positions_path_tap_on_map.Add(new BasicGeoposition() { Latitude = lat, Longitude = lon });//to turn on auto zoom mode
+
+            if (old_lat_tap_on_map != 0.0)//Vì lúc đầu chưa có dữ liệu nên k hiện máy bay
+            {
+                //Windows.UI.Xaml.Controls.Maps.MapPolyline mapPolyline = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
+                Path_When_User_Tap.Path = new Geopath(positions_path_tap_on_map);
+                myMap.MapElements.Remove(Path_When_User_Tap);
+                myMap.MapElements.Add(Path_When_User_Tap);
+
+            }
+            //Updata giá trí mới
+            old_lat_tap_on_map = lat;
+            old_lon_tap_on_map = lon;
+
+        }
+
+        //draw path linear and non linear
+        double a0_lat, a1_lat, a2_lat, a3_lat;
+        double a0_lon, a1_lon, a2_lon, a3_lon;
+        /// <summary>
+        /// find coefficient a0, a1, a2, a3 in path: a0 + a1*t + a2*t*t + a3*t*t*t
+        /// </summary>
+        /// <param name="t1"></param>
+        /// <param name="t2"></param>
+        /// <param name="t3"></param>
+        /// <param name="lat1"></param>
+        /// <param name="lon1"></param>
+        /// <param name="lat2"></param>
+        /// <param name="lon2"></param>
+        /// <param name="lat3"></param>
+        /// <param name="lon3"></param>
+        public void find_coefficient_a0a1a2a3(double t1, double t2, double t3, double lat1, double lon1,
+                    double lat2, double lon2, double lat3, double lon3)
+        {
+            double k1, k2, k3, k4, B, A;
+            k1 = t2 * t2 - t1 * t1 - 2 * t1 * (t2 - t1);
+            k2 = Math.Pow(t2, 3) - Math.Pow(t1, 3) - 3 * t1 * t1 * (t2 - t1);
+            k3 = t3 * t3 - t1 * t1 - 2 * t1 * (t3 - t1);
+            k4 = Math.Pow(t3, 3) - Math.Pow(t1, 3) - 3 * t1 * t1 * (t3 - t1);
+
+            try
+            {
+                //find a0_lat, a1_lat, a2_lat, a3_lat;
+                B = lat2 - lat1 - (k1 / (k1 - k3)) * (lat2 - lat3);
+                A = k2 - k1 * (k2 - k4) / (k1 - k3);
+                a3_lat = B / A;
+                a2_lat = (lat2 - lat3 - a3_lat * (k2 - k4)) / (k1 - k3);
+                a1_lat = -2 * a2_lat * t1 - 3 * a3_lat * t1 * t1;
+                a0_lat = lat1 - a1_lat * t1 - a2_lat * t1 * t1 - a3_lat * Math.Pow(t1, 3);
+
+                //find a0_lon, a1_lon, a2_lon, a3_lon;
+                B = lon2 - lon1 - (k1 / (k1 - k3)) * (lon2 - lon3);
+                A = k2 - k1 * (k2 - k4) / (k1 - k3);
+                a3_lon = B / A;
+                a2_lon = (lon2 - lon3 - a3_lon * (k2 - k4)) / (k1 - k3);
+                a1_lon = -2 * a2_lon * t1 - 3 * a3_lon * t1 * t1;
+                a0_lon = lon1 - a1_lon * t1 - a2_lon * t1 * t1 - a3_lon * Math.Pow(t1, 3);
+
+            }
+            catch (Exception ex)
+            {
+                status.Text = "Can't find coefficient because error: " + ex.Message;
+            }
         }
         //end of class
     }
