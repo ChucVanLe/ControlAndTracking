@@ -1569,7 +1569,7 @@ namespace PivotCS
             tab_display.Children.Remove(tblock_LatAndLon);
             tab_display.Children.Add(tblock_LatAndLon);
             //move zoom level to bottom on screen
-            tblock_ZoomLevel.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 44- 280, screenHeight - 50 - 38, 00, 00);
+            tblock_ZoomLevel.Margin = new Windows.UI.Xaml.Thickness(screenWidth - 44 - 280, screenHeight - 50 - 38, 00, 00);
             tab_display.Children.Remove(tblock_ZoomLevel);
             tab_display.Children.Add(tblock_ZoomLevel);
             //move TimeNow to bottom on screen
@@ -4303,13 +4303,13 @@ namespace PivotCS
                     // Create the DataWriter object and attach to OutputStream
                     dataWriteObject = new DataWriter(serialPort.OutputStream);
                     data_need_tran = "0," + roll_tb_Kp.Text + ',' + roll_tb_Ki.Text + ','
-                                            + roll_tb_Kd.Text + ',' + roll_tb_Setpoint.Text +",";
+                                            + roll_tb_Kd.Text + ',' + roll_tb_Setpoint.Text + ",";
                     Int32 checksum = 0;
-                    for(int i = 0; i < data_need_tran.Length; i++)
+                    for (int i = 0; i < data_need_tran.Length; i++)
                     {
                         checksum += data_need_tran[i];
                     }
-                    data_need_tran = '!' + data_need_tran + checksum.ToString() +  '@';
+                    data_need_tran = '!' + data_need_tran + checksum.ToString() + '@';
                     code_send_data = '0';
                     //Launch the WriteAsync task to perform the write
                     await UploadDataToFlight(data_need_tran);
@@ -4529,9 +4529,9 @@ namespace PivotCS
                     // Create the DataWriter object and attach to OutputStream
                     dataWriteObject = new DataWriter(serialPort.OutputStream);
                     string temp_lat_lon = "";
-                    for(int index_list_lon_lat = 0; index_list_lon_lat < lbox_postion_lat.Items.Count; index_list_lon_lat++)
+                    for (int index_list_lon_lat = 0; index_list_lon_lat < lbox_postion_lat.Items.Count; index_list_lon_lat++)
                     {
-                        temp_lat_lon +=  'v' + lbox_postion_lat.Items[index_list_lon_lat].ToString()
+                        temp_lat_lon += 'v' + lbox_postion_lat.Items[index_list_lon_lat].ToString()
                                         + 'k' + lbox_postion_lon.Items[index_list_lon_lat].ToString();
                     }
                     Int32 checksum = 0;
@@ -4718,11 +4718,11 @@ namespace PivotCS
             tab_setting.Children.Add(closeDevice);
             tab_setting.Children.Remove(status);
             tab_setting.Children.Add(status);
-            
+
             tab_setting.Children.Remove(tblock_ConnectDivice);
             tab_setting.Children.Add(tblock_ConnectDivice);
 
-            lbox_postion_lon.Width = screenWidth -44 - 1202;
+            lbox_postion_lon.Width = screenWidth - 44 - 1202;
             bt_Clear_Path.Width = screenWidth - 44 - 1200;
         }
 
@@ -4774,7 +4774,27 @@ namespace PivotCS
             //Updata giá trí mới
             old_lat_tap_on_map = lat;
             old_lon_tap_on_map = lon;
-
+            if (positions_path_tap_on_map.Count > 2)//draw path linear, t1, t2, t3:ms
+            {
+                List<BasicGeoposition> positions_path_on_map = new List<BasicGeoposition>();
+                find_coefficient_a0a1a2a3(0, 500, 1000,
+                    positions_path_tap_on_map[positions_path_tap_on_map.Count - 3].Latitude, positions_path_tap_on_map[positions_path_tap_on_map.Count - 3].Longitude,
+                    positions_path_tap_on_map[positions_path_tap_on_map.Count - 2].Latitude, positions_path_tap_on_map[positions_path_tap_on_map.Count - 2].Longitude,
+                    positions_path_tap_on_map[positions_path_tap_on_map.Count - 1].Latitude, positions_path_tap_on_map[positions_path_tap_on_map.Count - 1].Longitude);
+                //draw-----------------------------------------------
+                for (int index_draw_path = 0; index_draw_path < 1000; index_draw_path += 5)
+                {
+                    positions_path_on_map.Add(new BasicGeoposition()
+                    {
+                        Latitude = a0_lat + a1_lat * index_draw_path + a2_lat * index_draw_path * index_draw_path + a3_lat * Math.Pow(index_draw_path, 3),
+                        Longitude = a0_lon + a1_lon * index_draw_path + a2_lon * index_draw_path * index_draw_path + a3_lon * Math.Pow(index_draw_path, 3)
+                    });//to turn on auto zoom mode
+                }
+                //Windows.UI.Xaml.Controls.Maps.MapPolyline mapPolyline = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
+                Path_When_User_Tap.Path = new Geopath(positions_path_on_map);
+                myMap.MapElements.Remove(Path_When_User_Tap);
+                myMap.MapElements.Add(Path_When_User_Tap);
+            }
         }
 
         //draw path linear and non linear
@@ -4828,6 +4848,39 @@ namespace PivotCS
         //end of class
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////
+    public class SampleDataModel
+    {
+        public string Title { get; private set; }
+        public string ImagePath { get; private set; }
+        public bool IsNew { get; private set; }
+        public bool IsFlagged { get; private set; }
+
+        public SampleDataModel(string title, string imagePath, bool isNew = false, bool isFlagged = false)
+        {
+            this.Title = title;
+            this.ImagePath = imagePath;
+            this.IsNew = isNew;
+            this.IsFlagged = isFlagged;
+        }
+
+        public override string ToString()
+        {
+            return this.Title;
+        }
+
+        static public ObservableCollection<SampleDataModel> GetSampleData()
+        {
+            var MyCollection = new ObservableCollection<SampleDataModel>();
+            MyCollection.Add(new SampleDataModel("Cliff", "Assets/cliff.jpg"));
+            MyCollection.Add(new SampleDataModel("Grapes", "ms-appx:///Assets/grapes.jpg"));
+            MyCollection.Add(new SampleDataModel("Rainier", "ms-appx:///Assets/Rainier.jpg", true));
+            MyCollection.Add(new SampleDataModel("Sunset", "ms-appx:///Assets/Sunset.jpg", true, true));
+            MyCollection.Add(new SampleDataModel("Treetops", "ms-appx:///Assets/Treetops.jpg", true));
+            MyCollection.Add(new SampleDataModel("Valley", "ms-appx:///Assets/Valley.jpg", false, true));
+            return MyCollection;
+        }
+    }
     //////////////////////////////////////////////////////////////////////////////////////////
     public enum NotifyType//for show mesage while not find when press search button
     {
