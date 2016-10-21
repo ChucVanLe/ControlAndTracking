@@ -37,7 +37,7 @@
         <MenuFlyout x:Key="SampleContextMenu">
             <MenuFlyoutItem Text="Draw" Tag="&#xE899;" Style="{StaticResource MenuFlyoutItemIconTemplate}"  />
             <MenuFlyoutItem Text="Done" Tag="&#xE8FB;" Style="{StaticResource MenuFlyoutItemIconTemplate}"  />
-            <!--<MenuFlyoutItem Text="Clear" Tag="&#xE894;" Style="{StaticResource MenuFlyoutItemIconTemplate}" Click="bt_clear_polygon"/>-->
+            <MenuFlyoutItem Text="Clear" Tag="&#xE894;" Style="{StaticResource MenuFlyoutItemIconTemplate}" Click="bt_clear_polygon"/>
             <MenuFlyoutItem Text="Save" Tag="&#xE74E;" Style="{StaticResource MenuFlyoutItemIconTemplate}" />
 
             <!--<MenuFlyoutSubItem Text="Other">
@@ -298,7 +298,7 @@
                                             <MenuFlyoutItem Text="Increase" Click="bt_speed_inc_click"/>
                                             <MenuFlyoutItem Text="Decrease" Click="bt_speed_dec_click"/>
                                         </MenuFlyoutSubItem>
-                                        <MenuFlyoutItem Text="Open .txt file" Click="bt_open_file_click"/>
+                                        <MenuFlyoutItem x:Name="bt_open_file" Text="Open .txt file" Click="bt_open_file_click"/>
                                         <MenuFlyoutSubItem Text="Screen">
                                             <MenuFlyoutItem Text="One Screen" Click="bt_one_sceen_click"/>
                                             <MenuFlyoutItem Text="Two Screen" Click="bt_two_sceen_click"/>
@@ -309,12 +309,23 @@
                                             <MenuFlyoutItem Text="On" Click="bt_autoZoom_on_click"/>
                                             <MenuFlyoutItem Text="Off" Click="bt_autoZoom_off_click"/>
                                         </MenuFlyoutSubItem>
-                                        <MenuFlyoutItem x:Name="bt_List_Com" Click="bt_list_com_click" Text="List COM">
+                                        <!--<MenuFlyoutItem x:Name="bt_List_Com" Click="bt_list_com_click" Text="List COM">
                                         </MenuFlyoutItem>
                                         <MenuFlyoutSubItem Text="Device">
                                             <MenuFlyoutItem x:Name="bt_Connect" Text="Connect" Click="bt_device_connect_click"/>
                                             <MenuFlyoutItem x:Name="bt_DisConnect" IsEnabled="False" Text="DisConnect" Click="bt_device_disconnect_click"/>
+                                        </MenuFlyoutSubItem>-->
+                                        <!--Edit time sample to draw path of flight-->
+                                        <MenuFlyoutSubItem Text="Time Sample">
+                                            <MenuFlyoutItem x:Name="bt_Max" Text="Max" Click="bt_time_sample_max"/>
+                                            <MenuFlyoutItem x:Name="bt_1s" Text="1s" Click="bt_time_sample_1s"/>
+                                            <MenuFlyoutItem x:Name="bt_5s" Text="5s" Click="bt_time_sample_5s"/>
+                                            <MenuFlyoutItem x:Name="bt_10" Text="10s" Click="bt_time_sample_10s"/>
+                                            <MenuFlyoutItem x:Name="bt_20s" Text="20s" Click="bt_time_sample_20"/>
+                                            <MenuFlyoutItem x:Name="bt_30s" Text="30s" Click="bt_time_sample_30s"/>
+
                                         </MenuFlyoutSubItem>
+                                        <MenuFlyoutItem x:Name="bt_Exit" Text = "Exit" Click="bt_exit_Click"/>
                                     </MenuFlyout>
                                 </Button.Flyout>
                             </Button>

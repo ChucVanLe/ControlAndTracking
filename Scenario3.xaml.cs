@@ -71,6 +71,7 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using Windows.UI;
+using Windows.UI.Popups;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -500,16 +501,16 @@ namespace PivotCS
                 // Enable 'WRITE' button to allow sending data
                 //sendTextButton.IsEnabled = true;
 
-                bt_Connect.IsEnabled = false;
-                bt_DisConnect.IsEnabled = true;
+                //bt_Connect.IsEnabled = false;
+                //bt_DisConnect.IsEnabled = true;
                 Listen();
             }
             catch (Exception ex)
             {
                 status.Text = ex.Message;
                 comPortInput.IsEnabled = true;
-                bt_Connect.IsEnabled = true;
-                bt_List_Com.IsEnabled = true;
+                //bt_Connect.IsEnabled = true;
+                //bt_List_Com.IsEnabled = true;
             }
         }
 
@@ -526,8 +527,8 @@ namespace PivotCS
                 ListAvailablePorts();
 
                 //comPortInput.Content = "Connect";
-                bt_Connect.IsEnabled = true;
-                bt_DisConnect.IsEnabled = false;
+                //bt_Connect.IsEnabled = true;
+                //bt_DisConnect.IsEnabled = false;
                 bConnectOk = false;
             }
             catch (Exception ex)
@@ -686,34 +687,39 @@ namespace PivotCS
             //byte checkerror;
             if (bytesRead > 0)
             {
-                //byte[] data_check_error = new byte[bytesRead];
-                //byte[] data_right = new byte[bytesRead];
-                //Int16 temp_index_data_right = 0;
+                byte[] data_check_error = new byte[bytesRead];
+                byte[] data_right = new byte[bytesRead];
+                Int16 temp_index_data_right = 0;
                 try
                 {
                     //sTemp = dataReaderObject.ReadString(bytesRead);
-                    strDataFromSerialPort += dataReaderObject.ReadString(bytesRead);
-                    processDataToDrawTrajactory();
-
-                    ////check error, char > 127 => not string
-                    //dataReaderObject.ReadBytes(data_check_error);
-                    //for (int temp_index = 0; temp_index < bytesRead; temp_index++)
-                    //{
-                    //    if (data_check_error[temp_index] < 127)
-                    //    {
-                    //        data_right[temp_index_data_right] = data_check_error[temp_index];
-                    //        temp_index_data_right++;
-                    //    }
-                    //}
-                    //strDataFromSerialPort += System.Text.Encoding.UTF8.GetString(data_right);
+                    //strDataFromSerialPort += dataReaderObject.ReadString(bytesRead);
                     //processDataToDrawTrajactory();
+
+                    //check error, char > 127 => not string
+                    dataReaderObject.ReadBytes(data_check_error);
+                    for (int temp_index = 0; temp_index < bytesRead; temp_index++)
+                    {
+                        if (data_check_error[temp_index] < 127)
+                        {
+                            data_right[temp_index_data_right] = data_check_error[temp_index];
+                            temp_index_data_right++;
+                        }
+                    }
+                    //0 = data_right[0]: all data is error
+                    if (0 != data_right[0])
+                    {
+                        strDataFromSerialPort += System.Text.Encoding.UTF8.GetString(data_right);
+                        processDataToDrawTrajactory();
+                    }
+
                 }
                 catch (Exception ex)
                 {
 
                     errorFrame += 1;
                     tblock_Current_Timer.Text = "frame error: " + strDataFromSerialPort + ", Error: " + ex.Message + "No Error: " + errorFrame.ToString();
-
+                    Listen();
                 }
                 //
 
@@ -749,7 +755,7 @@ namespace PivotCS
             }
             serialPort = null;
             comPortInput.IsEnabled = true;
-            bt_List_Com.IsEnabled = true;
+            //bt_List_Com.IsEnabled = true;
             //sendTextButton.IsEnabled = false;
             //rcvdText.Text = "";
             listOfDevices.Clear();
@@ -1107,8 +1113,8 @@ namespace PivotCS
         public void processDataFull()
         {
             {
-                //Data.Temp = FindTextInStr(strDataFromSerialPort, "\r\n");
-                //if (Data.Temp.IndexOf('$') != -1)
+
+                //---------process data--------------------------------
                 try
                 {
 
@@ -1166,15 +1172,13 @@ namespace PivotCS
                         ////tbOutputText.Text += "DataSauCut: " + Data.Temp + '\n';
                         //tách lấy giờ, thời gian GPS chậm hơn thời gian thực 7h nên phải cộng 7
                         //Nếu time >= 240000.00 thì phải trừ đi 240000.00
-                        double dTemp_Time_hour = 0, dTemp_Time;
+                        int dTemp_Time_hour = 0;
                         string temp_time = Data.Temp.Substring(0, Data.Temp.IndexOf(','));
                         if (temp_time != "")
                         {
-                            dTemp_Time_hour = Convert.ToDouble(temp_time.Substring(0, 2)) + 7;
+                            dTemp_Time_hour = Convert.ToInt16(Data.Temp.Substring(0, 2)) + 7;
                             if (dTemp_Time_hour >= 24) dTemp_Time_hour -= 24;
-                            dTemp_Time = Convert.ToDouble(temp_time) + 70000.00;
-                            if (dTemp_Time >= 240000.00) dTemp_Time_hour -= 240000.00;
-                            Data.Time = dTemp_Time.ToString();
+                            Data.Time = dTemp_Time_hour.ToString() + Data.Temp.Substring(2, Data.Temp.IndexOf(',') - 2);
                         }
                         //show now time
                         //format hour:min:sec
@@ -1183,12 +1187,12 @@ namespace PivotCS
                         //    + ':' + temp_time.Substring(4, 5);
                         if (bConnectOk)//connect to Com
                         {
-                            if (-1 != Data.Time.IndexOf('.'))//have '.' in Data.Time 82754.7
-                                tblock_Current_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 6) + ':'
-                                        + Data.Time.Substring(Data.Time.Length - 6, 2) + ':' + Data.Time.Substring(Data.Time.Length - 4, 4);
-                            else
-                                tblock_Current_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 4) + ':'
-                                        + Data.Time.Substring(Data.Time.Length - 4, 2) + ':' + Data.Time.Substring(Data.Time.Length - 2, 2);
+                            //if (-1 != Data.Time.IndexOf('.'))//have '.' in Data.Time 82754.70
+                            tblock_Current_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 7) + ':'
+                                    + Data.Time.Substring(Data.Time.Length - 7, 2) + ':' + Data.Time.Substring(Data.Time.Length - 5, 5);
+                            //else
+                            //    tblock_Current_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 4) + ':'
+                            //            + Data.Time.Substring(Data.Time.Length - 4, 2) + ':' + Data.Time.Substring(Data.Time.Length - 2, 2);
                         }
 
                         //tblock_CurentTime.Text = "Now: " + Data.Time;
@@ -1223,7 +1227,17 @@ namespace PivotCS
 
                         ShowSpeed_Alt_Position();
 
+                        if (Data.Speed != null)
+                            if ((Convert.ToDouble(Data.Speed) < 100) && (Convert.ToDouble(Data.Pitch) > 300))
+                            {
+                                try
+                                {
+                                    dialogTask.Cancel();
+                                }
+                                catch { }
 
+                                show_alert("please decrease pitch angle!");
+                            }
 
                     }
                     //**********************************************************************
@@ -1416,13 +1430,12 @@ namespace PivotCS
             ShowSpeed_Alt_Position();
         }
 
+        double angle_position_of_flight_to_des;
         /// <summary>
         /// show speed, alt, trajectory, distance,...
         /// </summary>
         void ShowSpeed_Alt_Position()
         {
-
-            double temp_angle;
 
             try
             {
@@ -1462,7 +1475,7 @@ namespace PivotCS
                     //Tan Son Nhat Airport dLatDentination, dLonDentination
                     //Point2: 10.113574, 106.052579
                     dDistanToTaget = distance(dLatGol, dLonGol, Convert.ToDouble(Data.Altitude), dLatDentination, dLonDentination, 0);
-                    temp_angle = angleFromCoordinate(dLatGol, dLonGol, dLatDentination, dLonDentination);
+                    angle_position_of_flight_to_des = angleFromCoordinate(dLatGol, dLonGol, dLatDentination, dLonDentination);
                     //Ta hiện khoảng cách trên đường thẳng chứ không hiện textbox nên bỏ dòng sau
                     //tbShowDis.Text = "Distance to Dentination:  " + dDistanToTaget.ToString() + "\n";
                     //Tinh goc giua 2 diem từ vị trí máy bay đến đích
@@ -1471,15 +1484,19 @@ namespace PivotCS
                     //Ngay 21/1/2016 Show Data
                     //ShowDistance(0, temp_angle + 90, dDistanToTaget.ToString() + " Meter", 30 * myMap.ZoomLevel / 22, dLatGol, dLonGol, 1);//Purple
                     //**********optimize 6/3/2016
-                    ShowDistance_optimize(0, temp_angle + 90, dDistanToTaget.ToString() + " Meter", 50 * myMap.ZoomLevel / 22, dLatGol, dLonGol);//Purple
+                    ShowDistance_optimize(0, angle_position_of_flight_to_des + 90, dDistanToTaget.ToString() + " Meter", 50 * myMap.ZoomLevel / 22, dLatGol, dLonGol);//Purple
 
                 }
                 if (bSetup)
                 {
                     //Neu angle la null thi convert k duoc
                     if (Data.Angle != "")
+                    {
                         DisplayDataOnMap(Convert.ToDouble(Data.Roll) / 10, Convert.ToDouble(Data.Pitch) / 10, Convert.ToDouble(Data.Speed),
                             Convert.ToDouble(Data.Altitude), 0, Convert.ToDouble(Data.Angle));
+                        //draw angle, rotate needle from posion of flight to des
+                        //rotate_needle_ang_to_des(Convert.ToDouble(Data.Angle) - angle_position_of_flight_to_des);
+                    }
                     else
                         DisplayDataOnMap(Convert.ToDouble(Data.Roll) / 10, Convert.ToDouble(Data.Pitch) / 10, Convert.ToDouble(Data.Speed),
                             Convert.ToDouble(Data.Altitude), 0, 0.0);
@@ -2897,9 +2914,9 @@ namespace PivotCS
 
 
 
-            mapPolyline.StrokeColor = Colors.Red;
-            mapPolyline.StrokeThickness = 2;
-            mapPolyline.StrokeDashed = false;//nét liền
+            line_path_of_flight.StrokeColor = Colors.Red;
+            line_path_of_flight.StrokeThickness = 2;
+            line_path_of_flight.StrokeDashed = false;//nét liền
 
             //Ve duong thang den dentination
             //San bay tan son nhat:  dLatDentination, dLonDentination google map
@@ -2911,12 +2928,12 @@ namespace PivotCS
             if (old_Lat != 0.0)//Vì lúc đầu chưa có dữ liệu nên k hiện máy bay
             {
                 //Windows.UI.Xaml.Controls.Maps.MapPolyline mapPolyline = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
-                mapPolyline.Path = new Geopath(new List<BasicGeoposition>() {
+                line_path_of_flight.Path = new Geopath(new List<BasicGeoposition>() {
                 new BasicGeoposition() {Latitude = old_Lat, Longitude = old_Lon, Altitude = alt + 0.00005},
                 //San Bay Tan Son Nhat
                 new BasicGeoposition() {Latitude = lat, Longitude = lon, Altitude = alt - 0.00005},
-            });
-                myMap.MapElements.Add(mapPolyline);
+                });
+                myMap.MapElements.Add(line_path_of_flight);
 
 
                 myMap.MapElements.Add(polylineHereToDentination);
@@ -2950,6 +2967,8 @@ namespace PivotCS
         //draw line in map 2D
         //Vẽ quỹ đạo là nét liền nên ta dùng 2 biến tạm để lưu giá trị cũ của Lat, Lon
         //double old_Lat, old_Lon;
+        double check_is_have_GPS = 0;
+        Windows.UI.Xaml.Controls.Maps.MapPolyline line_path_of_flight = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
         /// <summary>
         /// Chấm điểm có màu vàng tại vị trí lat, lon, Alt
         /// Vẽ vị trí máy bay và góc quay của máy bay
@@ -2973,7 +2992,7 @@ namespace PivotCS
             imageOfFlight.RenderTransform = new RotateTransform()
             {
 
-                Angle = dHeading,
+                Angle = dHeading - myMap.Heading,
                 //Angle = 0,
                 CenterX = 4 * myMap.ZoomLevel / 2,
                 CenterY = 4 * myMap.ZoomLevel / 2 //The prop name maybe mistyped 
@@ -2998,30 +3017,53 @@ namespace PivotCS
             //if (old_Lat != 0.0)//Vì lúc đầu chưa có dữ liệu nên k hiện máy bay
             //    positions.Add(new BasicGeoposition() { Latitude = old_Lat, Longitude = old_Lon });   //<== this
             //                                                                                         // Now add your positions:
-            if (0 != old_Lat)
+            if (0 != check_is_have_GPS)
             {
-                positions.Add(new BasicGeoposition() { Latitude = lat, Longitude = lon });//to turn on auto zoom mode
 
                 //Vẽ quỹ đạo
-                MapPolyline lineToRmove = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
+                if (index_draw_path < time_sample_draw_path) index_draw_path++;
+                else
+                {
+                    index_draw_path = 1;
+                    if (bConnectOk)
+                    {
+                        line_path_of_flight.Path = new Geopath(new List<BasicGeoposition>() {
+                        new BasicGeoposition() {Latitude = old_Lat, Longitude = old_Lon},
+                        new BasicGeoposition() {Latitude = lat, Longitude = lon}
+                        });
 
-                lineToRmove.Path = new Geopath(new List<BasicGeoposition>() {
-                new BasicGeoposition() {Latitude = old_Lat, Longitude = old_Lon},
-                //San Bay Tan Son Nhat
-                new BasicGeoposition() {Latitude = lat, Longitude = lon}
-                });
+                        myMap.MapElements.Add(line_path_of_flight);
+                    }
+                    else
+                    {
+                        //--------------------------------------
+                        //read file press pause remove all of object
+                        //Vẽ quỹ đạo
+                        MapPolyline lineToRmove = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
 
-                lineToRmove.StrokeColor = Colors.Red;
-                lineToRmove.StrokeThickness = 2;
-                lineToRmove.StrokeDashed = false;//nét liền
+                        lineToRmove.Path = new Geopath(new List<BasicGeoposition>() {
+                            new BasicGeoposition() {Latitude = old_Lat, Longitude = old_Lon},
+                            //San Bay Tan Son Nhat
+                            new BasicGeoposition() {Latitude = lat, Longitude = lon}
+                            });
 
-                //myMap.MapElements.Remove(mapPolyline);
-                myMap.MapElements.Add(lineToRmove);
+                        lineToRmove.StrokeColor = Colors.Red;
+                        lineToRmove.StrokeThickness = 2;
+                        lineToRmove.StrokeDashed = false;//nét liền
 
+                        //myMap.MapElements.Remove(mapPolyline);
+                        myMap.MapElements.Add(lineToRmove);
+                    }
+
+                }
 
                 //auto zoom
                 if (bAutoZoom)
+                {
+                    positions.Add(new BasicGeoposition() { Latitude = lat, Longitude = lon });//to turn on auto zoom mode
                     SetMapPolyline(positions);
+                }
+
 
 
                 myMap.Children.Add(imageOfFlight);
@@ -3035,10 +3077,15 @@ namespace PivotCS
                 myMap.MapElements.Add(polylineHereToDentination);
             }
 
+            check_is_have_GPS = lat;
 
-            //Updata giá trí mới
-            old_Lat = lat;
-            old_Lon = lon;
+            if (1 == index_draw_path)
+            {
+                //update new data to draw path
+                old_Lat = lat;
+                old_Lon = lon;
+            }
+
         }
 
         //test remove polyline
@@ -3258,6 +3305,7 @@ namespace PivotCS
 
                     processDataToGetInf();
 
+
                 }
                 sStartTime = Data.Time;
                 //format hour:min:sec
@@ -3277,6 +3325,7 @@ namespace PivotCS
                     strDataFromSerialPort = streamReader.ReadLine();
 
                     processDataToGetInf();
+                    //processToDrawTrajactory();
 
                 }
                 sStopTime = Data.Time;
@@ -3294,9 +3343,95 @@ namespace PivotCS
             }
             catch { }
 
+        }
+        /// <summary>
+        /// return start time, End of time
+        /// </summary>
+        async void ReadInfOfFileToDrawPath()
+        {
 
+            try
+            {
+                openPicker = new Windows.Storage.Pickers.FileOpenPicker();
+                openPicker.ViewMode = Windows.Storage.Pickers.PickerViewMode.Thumbnail;
+                openPicker.SuggestedStartLocation =
+                    Windows.Storage.Pickers.PickerLocationId.PicturesLibrary;
+
+                openPicker.FileTypeFilter.Add(".txt");
+
+                Windows.Storage.StorageFile file = await openPicker.PickSingleFileAsync();
+
+                Stream stream = (await file.OpenReadAsync()).AsStreamForRead();
+
+                streamReader = new StreamReader(stream);
+                setupReadfile = true;
+                //Int32 index = 0;
+                Data.Time = null;
+                while (null == Data.Time)
+
+                {
+                    strDataFromSerialPort = streamReader.ReadLine();
+
+                    //processDataToGetInf();
+                    processToDrawTrajactory();
+                }
+                sStartTime = Data.Time;
+                //format hour:min:sec
+                if (-1 != Data.Time.IndexOf('.'))//have '.' in Data.Time 82754.7
+                    tblock_Start_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 6) + ':'
+                            + Data.Time.Substring(Data.Time.Length - 6, 2) + ':' + Data.Time.Substring(Data.Time.Length - 4, 4);
+                else
+                    tblock_Start_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 4) + ':'
+                            + Data.Time.Substring(Data.Time.Length - 4, 2) + ':' + Data.Time.Substring(Data.Time.Length - 2, 2);
+
+                streamReader.BaseStream.Seek(-1, SeekOrigin.End);   //đưa con trỏ về cuối của file
+                                                                    //double _position = streamReader.BaseStream.Position;//lấy số ký tự của file txt
+                streamReader.BaseStream.Seek(-2000, SeekOrigin.Current);//dịch con trỏ từ cuối file về lui khoảng 2000 ký tự
+                                                                        //chúng ta sẽ đọc được thời điểm bay cuối cùng
+                while (streamReader.Peek() >= 0)
+                {
+                    strDataFromSerialPort = streamReader.ReadLine();
+
+                    //processDataToGetInf();
+                    processToDrawTrajactory();
+                }
+                sStopTime = Data.Time;
+                //format hour:min:sec
+                if (-1 != Data.Time.IndexOf('.'))//have '.' in Data.Time 82754.7
+                    tblock_End_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 6) + ':'
+                            + Data.Time.Substring(Data.Time.Length - 6, 2) + ':' + Data.Time.Substring(Data.Time.Length - 4, 4);
+                else
+                    tblock_End_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 4) + ':'
+                            + Data.Time.Substring(Data.Time.Length - 4, 2) + ':' + Data.Time.Substring(Data.Time.Length - 2, 2);
+                Data.Time = sStartTime;
+                streamReader.BaseStream.Seek(0, SeekOrigin.Begin);
+                streamReader = new StreamReader(stream);
+                editTimeWhenChangeslider();
+
+                //Vẽ quỹ đạo
+                positions.Clear();
+                while (streamReader.Peek() >= 0)
+                {
+                    strDataFromSerialPort = streamReader.ReadLine();
+
+                    //processDataToGetInf();
+                    processToDrawTrajactory();
+                }
+                MapPolyline lineToRmove = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
+
+                lineToRmove.Path = new Geopath(positions);
+
+                lineToRmove.StrokeColor = Colors.Red;
+                lineToRmove.StrokeThickness = 2;
+                lineToRmove.StrokeDashed = false;//nét liền
+
+                //myMap.MapElements.Remove(mapPolyline);
+                myMap.MapElements.Add(lineToRmove);
+            }
+            catch { }
 
         }
+
         /// <summary>
         /// doc tai bat ky thoi diem nao, co the pause, play
         /// </summary>
@@ -4106,15 +4241,15 @@ namespace PivotCS
                 //tblock_Current_Timer.Text = Data.Time;
                 sDisplayTimeNotFormat = Data.Time;
                 //format hour:min:sec
-                if (-1 != Data.Time.IndexOf('.'))//have '.' in Data.Time 82754.7
-                    tblock_Current_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 6) + ':'
-                            + Data.Time.Substring(Data.Time.Length - 6, 2) + ':' + Data.Time.Substring(Data.Time.Length - 4, 4);
-                else
-                    tblock_Current_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 4) + ':'
-                            + Data.Time.Substring(Data.Time.Length - 4, 2) + ':' + Data.Time.Substring(Data.Time.Length - 2, 2);
+                try
+                {
+                    tblock_Current_Timer.Text = Data.Time.Substring(0, Data.Time.Length - 7) + ':'
+                            + Data.Time.Substring(Data.Time.Length - 7, 2) + ':' + Data.Time.Substring(Data.Time.Length - 5, 5);
 
-                slider_AdjTime.Value = 100 * (Convert.ToDouble(sDisplayTimeNotFormat) - Convert.ToDouble(sStartTime)) /
-                    (Convert.ToDouble(sStopTime) - Convert.ToDouble(sStartTime));
+                    slider_AdjTime.Value = 100 * (Convert.ToDouble(sDisplayTimeNotFormat) - Convert.ToDouble(sStartTime)) /
+                        (Convert.ToDouble(sStopTime) - Convert.ToDouble(sStartTime));
+                }
+                catch { }
 
                 index++;
                 if (index == limitSpeed)
@@ -4634,7 +4769,7 @@ namespace PivotCS
         private void bt_device_connect_click(object sender, RoutedEventArgs e)
         {
             Connect_To_Com();
-            ConnectDevices.Opacity = 1;// don't dispay ConnectDevices
+            //ConnectDevices.Opacity = 1;// don't dispay ConnectDevices
             //remove tblock_Start_Timer, tblock_End_Timer, slider_AdjTime when connect Com
             tab_display.Children.Remove(tblock_Start_Timer);
             tab_display.Children.Remove(tblock_End_Timer);
@@ -4643,6 +4778,7 @@ namespace PivotCS
             bt_Play.IsEnabled = false;
             bt_Pause.IsEnabled = false;
             bt_Speed.IsEnabled = false;
+            bt_open_file.IsEnabled = false;
         }
 
         /// <summary>
@@ -4653,7 +4789,8 @@ namespace PivotCS
         private void bt_device_disconnect_click(object sender, RoutedEventArgs e)
         {
             DisConnect_To_Com();
-            ConnectDevices.Opacity = 1;//dispay ConnectDevices
+            //ConnectDevices.Opacity = 1;//dispay ConnectDevices
+            bt_open_file.IsEnabled = true;
         }
 
         /// <summary>
@@ -4845,6 +4982,303 @@ namespace PivotCS
                 status.Text = "Can't find coefficient because error: " + ex.Message;
             }
         }
+
+        int time_sample_draw_path = 1, index_draw_path = 1;
+        /// <summary>
+        /// change time sample to max: 0.2s
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bt_time_sample_max(object sender, RoutedEventArgs e)
+        {
+            time_sample_draw_path = 1;//30min --> system is slow
+        }
+
+        /// <summary>
+        /// change time sample to 1s
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bt_time_sample_1s(object sender, RoutedEventArgs e)
+        {
+            time_sample_draw_path = 5;//150min --> system is slow
+        }
+        /// <summary>
+        /// change time sample to 5s
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bt_time_sample_5s(object sender, RoutedEventArgs e)
+        {
+            time_sample_draw_path = 25;//750min --> system is slow
+        }
+        /// <summary>
+        /// change time sample to 10s
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bt_time_sample_10s(object sender, RoutedEventArgs e)
+        {
+            time_sample_draw_path = 50;//1500min --> system is slow
+        }
+        /// <summary>
+        /// change time sample to 20s
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bt_time_sample_20(object sender, RoutedEventArgs e)
+        {
+            time_sample_draw_path = 100;//3000min --> system is slow
+        }
+        /// <summary>
+        /// change time sample to 30s
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bt_time_sample_30s(object sender, RoutedEventArgs e)
+        {
+            time_sample_draw_path = 150;//4500min --> system is slow
+        }
+
+        private void bt_clear_polygon(object sender, RoutedEventArgs e)
+        {
+            number_of_tap = 0;
+            positions_path_tap_on_map.Clear();
+            myMap.MapElements.Clear();
+            //myMap.MapElements.Remove(Polygon_When_User_Tap);
+        }
+
+        private void bt_open_file_to_draw_path_click(object sender, RoutedEventArgs e)
+        {
+            ConnectDevices.Opacity = 0;// don't dispay ConnectDevices
+            myMap.Children.Clear();
+            myMap.MapElements.Clear();
+            positions.Clear();
+            positions = new List<BasicGeoposition>();
+            //ReadInfOfFile();
+            ReadInfOfFileToDrawPath();
+            //add tblock_Start_Timer, tblock_End_Timer, slider_AdjTime
+            tab_display.Children.Remove(tblock_Start_Timer);
+            tab_display.Children.Remove(tblock_End_Timer);
+            tab_display.Children.Remove(slider_AdjTime);
+            tab_display.Children.Add(tblock_Start_Timer);
+            tab_display.Children.Add(tblock_End_Timer);
+            tab_display.Children.Add(slider_AdjTime);
+            //Enable play, Pause, Speed Lisbox when Open_File is selected
+            bt_Play.IsEnabled = true;
+            bt_Pause.IsEnabled = true;
+            bt_Speed.IsEnabled = true;
+
+        }
+
+        private void bt_exit_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Exit();
+        }
+
+
+        //List<BasicGeoposition> positions_path_tap_on_map = new List<BasicGeoposition>();
+        /// <summary>
+        /// Chấm điểm có màu vàng tại vị trí lat, lon, Alt
+        /// Vẽ vị trí máy bay và góc quay của máy bay
+        /// Vẽ đường thẳng nối tới điểm đích
+        /// </summary>
+        /// <param name="lat"></param>
+        /// <param name="lon"></param>
+        /// <param name="alt"></param>
+        /// <param name="dHeading"></param>
+        void Draw_Polygon_When_Tap_On_Map(double lat, double lon, double alt)
+        {
+
+
+            //MapIcon icon_tap_on_map = new MapIcon();
+            //icon_tap_on_map.Location = new Geopoint(new BasicGeoposition()
+            //{
+            //    Latitude = lat,
+            //    Longitude = lon,
+            //    Altitude = alt
+            //});
+            //icon_tap_on_map.NormalizedAnchorPoint = new Point(0.5, 1.0);
+            //icon_tap_on_map.Title = "Pos " + (++number_of_tap).ToString();
+            //myMap.MapElements.Add(icon_tap_on_map);
+
+
+
+            //Polygon_When_User_Tap.ZIndex = 1;
+            //Polygon_When_User_Tap.FillColor = Colors.Red;
+            //Polygon_When_User_Tap.StrokeColor = Colors.Blue;
+            //Polygon_When_User_Tap.StrokeThickness = 3;
+            //Polygon_When_User_Tap.StrokeDashed = false;
+
+            //positions_path_tap_on_map.Add(new BasicGeoposition() { Latitude = lat, Longitude = lon });//to turn on auto zoom mode
+
+            //if ((old_lat_tap_on_map != 0.0) && (positions_path_tap_on_map.Count > 2))//Vì lúc đầu chưa có dữ liệu nên k hiện máy bay
+            //{
+            //    //Windows.UI.Xaml.Controls.Maps.MapPolyline mapPolyline = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
+            //    Polygon_When_User_Tap.Path = new Geopath(positions_path_tap_on_map);
+            //    myMap.MapElements.Remove(Polygon_When_User_Tap);
+            //    myMap.MapElements.Add(Polygon_When_User_Tap);
+
+            //}
+            ////Updata giá trí mới
+            //old_lat_tap_on_map = lat;
+            //old_lon_tap_on_map = lon;
+        }
+
+        private bool _IsShiftPressed = false;
+        private bool _IsPointerPressed = false;
+
+        //press arrow
+        protected override void OnKeyDown(KeyRoutedEventArgs e)
+        {
+            // Handle Shift+F10
+            // Handle MenuKey
+
+            if (e.Key == Windows.System.VirtualKey.Shift)
+            {
+                _IsShiftPressed = true;
+            }
+
+            // Shift+F10
+            else if (_IsShiftPressed && e.Key == Windows.System.VirtualKey.F10)
+            {
+                var FocusedElement = FocusManager.GetFocusedElement() as UIElement;
+
+                SampleDataModel MyObject = null;
+                if (FocusedElement is ContentControl)
+                {
+                    MyObject = ((ContentControl)FocusedElement).Content as SampleDataModel;
+                }
+                ShowContextMenu(MyObject, FocusedElement, new Point(0, 0));
+                e.Handled = true;
+            }
+
+            // The 'Menu' key next to Right Ctrl on most keyboards
+            else if (e.Key == Windows.System.VirtualKey.Application)
+            {
+                var FocusedElement = FocusManager.GetFocusedElement() as UIElement;
+                SampleDataModel MyObject = null;
+                if (FocusedElement is ContentControl)
+                {
+                    MyObject = ((ContentControl)FocusedElement).Content as SampleDataModel;
+                }
+                ShowContextMenu(MyObject, FocusedElement, new Point(0, 0));
+                e.Handled = true;
+            }
+
+            base.OnKeyDown(e);
+        }
+
+        //press arrow
+        protected override void OnKeyUp(KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Shift)
+            {
+                _IsShiftPressed = false;
+            }
+
+            base.OnKeyUp(e);
+        }
+        //protected override void OnHolding(HoldingRoutedEventArgs e)
+        //{
+        //    // Responding to HoldingState.Started will show a context menu while your finger is still down, while 
+        //    // HoldingState.Completed will wait until the user has removed their finger. 
+        //    if (e.HoldingState == Windows.UI.Input.HoldingState.Completed)
+        //    {
+        //        var PointerPosition = e.GetPosition(null);
+
+        //        var MyObject = (e.OriginalSource as FrameworkElement).DataContext as SampleDataModel;
+        //        ShowContextMenu(MyObject, null, PointerPosition);
+        //        e.Handled = true;
+
+        //        // This, combined with a check in OnRightTapped prevents the firing of RightTapped from
+        //        // launching another context menu
+        //        _IsPointerPressed = false;
+
+        //        // This prevents any scrollviewers from continuing to pan once the context menu is displayed.  
+        //        // Ideally, you should find the ListViewItem itself and only CancelDirectMinpulations on that item.  
+        //        //var ItemsToCancel = VisualTreeHelper.FindElementsInHostCoordinates(PointerPosition, ItemListView);
+        //        //foreach (var Item in ItemsToCancel)
+        //        //{
+        //        //    var Result = Item.CancelDirectManipulations();
+        //        //}
+        //    }
+
+        //    base.OnHolding(e);
+        //}
+
+        protected override void OnPointerPressed(PointerRoutedEventArgs e)
+        {
+            _IsPointerPressed = true;
+
+            base.OnPointerPressed(e);
+        }
+
+        protected override void OnRightTapped(RightTappedRoutedEventArgs e)
+        {
+            if (_IsPointerPressed)
+            {
+                var MyObject = (e.OriginalSource as FrameworkElement).DataContext as SampleDataModel;
+
+                ShowContextMenu(MyObject, null, e.GetPosition(null));
+                e.Handled = true;
+            }
+
+            base.OnRightTapped(e);
+        }
+
+        private void ShowContextMenu(SampleDataModel data, UIElement target, Point offset)
+        {
+            var MyFlyout = this.Resources["SampleContextMenu"] as MenuFlyout;
+
+            //System.Diagnostics.Debug.WriteLine("MenuFlyout shown '{0}', '{1}'", target, offset);
+
+            MyFlyout.ShowAt(target, offset);
+        }
+
+        //MessageDialog msgbox_alert = new MessageDialog("Would you like to greet the world with a \"Hello, world\"?", "Tracking Flight");
+        private IAsyncOperation<IUICommand> dialogTask;
+        public async void show_alert(string message)
+        {
+            MessageDialog dialog = new MessageDialog(message, "Information");
+            //await dialog.ShowAsync();
+
+
+
+            //msgbox_alert.Content = message;
+            dialogTask = dialog.ShowAsync();
+            //await msgbox_alert.ShowAsync();
+            //msgbox.Commands.Clear();
+            //msgbox.Commands.Add(new UICommand { Label = "Yes", Id = 0 });
+            //msgbox.Commands.Add(new UICommand { Label = "No", Id = 1 });
+            //msgbox.Commands.Add(new UICommand { Label = "Cancel", Id = 2 });
+
+            //var res = await msgbox.ShowAsync();
+            ////res.Cancel();
+            ////res.Invoked.
+
+            //if ((int)res.Id == 0)
+            //{
+            //    MessageDialog msgbox2 = new MessageDialog("Hello to you too! :)", "User Response");
+            //    await msgbox2.ShowAsync();
+            //}
+
+            //if ((int)res.Id == 1)
+            //{
+            //    MessageDialog msgbox2 = new MessageDialog("Oh well, too bad! :(", "User Response");
+            //    await msgbox2.ShowAsync();
+            //}
+
+            //if ((int)res.Id == 2)
+            //{
+            //    MessageDialog msgbox2 = new MessageDialog("Nevermind then... :|", "User Response");
+            //    await msgbox2.ShowAsync();
+            //}
+
+        }
+
+
+
         //end of class
     }
 
