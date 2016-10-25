@@ -83,6 +83,8 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
+
+using Accord.Math;//solve matrix
 //************************************************
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
@@ -149,8 +151,8 @@ namespace PivotCS
             Dis_Setup();
             init_timer_check_reply_from_flight_no_start(1000);
             //test func
-            find_coefficient_a0a1a2a3(3, 10, 20, 15, 15, 60, 60, 88, 09);
-
+            //find_coefficient_a0a1a2a3(3, 10, 20, 15, 15, 60, 60, 88, 09);
+            //TestSpline();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -284,7 +286,8 @@ namespace PivotCS
             lbox_postion_lon.Items.Add(Math.Round(tappedGeoPosition.Longitude, 8).ToString());
 
             //draw path when user tap on maps
-            Draw_Path_When_Tap_On_Map(tappedGeoPosition.Latitude, tappedGeoPosition.Longitude, tappedGeoPosition.Altitude);
+            //Draw_Path_When_Tap_On_Map(tappedGeoPosition.Latitude, tappedGeoPosition.Longitude, tappedGeoPosition.Altitude);
+            Draw_Path_When_Tap_On_Map_using_spline(tappedGeoPosition.Latitude, tappedGeoPosition.Longitude, tappedGeoPosition.Altitude);
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>
@@ -4934,6 +4937,57 @@ namespace PivotCS
             }
         }
 
+        List<BasicGeoposition> positions_path_on_map_using_spline = new List<BasicGeoposition>();
+
+        void Draw_Path_When_Tap_On_Map_using_spline(double lat, double lon, double alt)
+        {
+
+
+            MapIcon icon_tap_on_map = new MapIcon();
+            icon_tap_on_map.Location = new Geopoint(new BasicGeoposition()
+            {
+                Latitude = lat,
+                Longitude = lon,
+                Altitude = alt
+            });
+            icon_tap_on_map.NormalizedAnchorPoint = new Point(0.5, 1.0);
+            icon_tap_on_map.Title = "Pos " + (++number_of_tap).ToString();
+            myMap.MapElements.Add(icon_tap_on_map);
+
+
+            Path_When_User_Tap.StrokeColor = Colors.Green;
+            Path_When_User_Tap.StrokeThickness = 2;
+            Path_When_User_Tap.StrokeDashed = true;//nét đứt
+
+            positions_path_tap_on_map.Add(new BasicGeoposition() { Latitude = lat, Longitude = lon });//to turn on auto zoom mode
+            double[] xi_lat = new double[positions_path_tap_on_map.Count], yi_lon = new double[positions_path_tap_on_map.Count];
+            for(int i = 0; i < positions_path_tap_on_map.Count; i++)
+            {
+                xi_lat[i] = positions_path_tap_on_map[i].Latitude;
+                yi_lon[i] = positions_path_tap_on_map[i].Longitude;
+            }
+            if (old_lat_tap_on_map != 0.0)//Vì lúc đầu chưa có dữ liệu nên k hiện máy bay
+            {
+                //Windows.UI.Xaml.Controls.Maps.MapPolyline mapPolyline = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
+                //Path_When_User_Tap.Path = new Geopath(positions_path_tap_on_map);
+                //myMap.MapElements.Remove(Path_When_User_Tap);
+                //myMap.MapElements.Add(Path_When_User_Tap);
+
+            }
+            //Updata giá trí mới
+            old_lat_tap_on_map = lat;
+            old_lon_tap_on_map = lon;
+            if (positions_path_tap_on_map.Count > 2)//draw path linear, t1, t2, t3:ms
+            {
+
+                find_coefficient(xi_lat, yi_lon);
+                //Windows.UI.Xaml.Controls.Maps.MapPolyline mapPolyline = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
+                Path_When_User_Tap.Path = new Geopath(positions_path_on_map_using_spline);
+                myMap.MapElements.Remove(Path_When_User_Tap);
+                myMap.MapElements.Add(Path_When_User_Tap);
+            }
+        }
+
         //draw path linear and non linear
         double a0_lat, a1_lat, a2_lat, a3_lat;
         double a0_lon, a1_lon, a2_lon, a3_lon;
@@ -5030,6 +5084,17 @@ namespace PivotCS
         {
             time_sample_draw_path = 100;//3000min --> system is slow
         }
+
+        /// <summary>
+        /// upload trjectory hinh luc giac, canh 50m, goc 120
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bt_upload_path_hexa_angle_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
         /// <summary>
         /// change time sample to 30s
         /// </summary>
@@ -5247,38 +5312,116 @@ namespace PivotCS
 
             //msgbox_alert.Content = message;
             dialogTask = dialog.ShowAsync();
-            //await msgbox_alert.ShowAsync();
-            //msgbox.Commands.Clear();
-            //msgbox.Commands.Add(new UICommand { Label = "Yes", Id = 0 });
-            //msgbox.Commands.Add(new UICommand { Label = "No", Id = 1 });
-            //msgbox.Commands.Add(new UICommand { Label = "Cancel", Id = 2 });
-
-            //var res = await msgbox.ShowAsync();
-            ////res.Cancel();
-            ////res.Invoked.
-
-            //if ((int)res.Id == 0)
-            //{
-            //    MessageDialog msgbox2 = new MessageDialog("Hello to you too! :)", "User Response");
-            //    await msgbox2.ShowAsync();
-            //}
-
-            //if ((int)res.Id == 1)
-            //{
-            //    MessageDialog msgbox2 = new MessageDialog("Oh well, too bad! :(", "User Response");
-            //    await msgbox2.ShowAsync();
-            //}
-
-            //if ((int)res.Id == 2)
-            //{
-            //    MessageDialog msgbox2 = new MessageDialog("Nevermind then... :|", "User Response");
-            //    await msgbox2.ShowAsync();
-            //}
 
         }
 
+        public void TestSpline()
+        {
+            double[] xi = { 0, 1, 2, 3 };
+            double[] yi = { 1, 2, 4, 8 };
+            if (xi.Length != yi.Length) return;
+            int number_point_spline = xi.Length;
+            double[] hi = new double[number_point_spline - 1];
+            for (int i = 0; i < number_point_spline - 1; i++)
+            {
+                hi[i] = xi[i + 1] - xi[i];
+            }
+            double[,] A_spline = new double[number_point_spline, number_point_spline];
 
+            A_spline[0, 0] = 1;
+            A_spline[number_point_spline - 1, number_point_spline - 1] = 1;
+            for (int i = 1; i < number_point_spline - 1; i++)
+            {
+                A_spline[i, i - 1] = hi[i - 1];
+                A_spline[i, i] = 2 * (hi[i - 1] + hi[i]);
+                A_spline[i, i + 1] = hi[i];
+            }
+            double[,] B_spline = new double[number_point_spline, 1];
 
+            for (int i = 1; i < number_point_spline - 1; i++)
+            {
+                B_spline[i, 0] = (3 / hi[i]) * (yi[i + 1] - yi[i]) - (3 / hi[i - 1]) * (yi[i] - yi[i - 1]);
+            }
+
+            // Coefficient vector cj
+
+            var cj = Accord.Math.Matrix.Solve(A_spline, B_spline, leastSquares: false);
+            // Coefficient vector bj:
+
+            double[,] bj = new double[number_point_spline - 1, 1];
+            for (int i = 0; i < number_point_spline - 1; i++)
+                bj[i, 0] = (1 / hi[i]) * (yi[i + 1] - yi[i]) - (double)hi[i] * (2 * cj[i, 0] + cj[i + 1, 0]) / 3;
+
+            //Coefficient vector dj
+            double[,] dj = new double[number_point_spline - 1, 1];
+            for (int i = 0; i < number_point_spline - 1; i++)
+                dj[i, 0] = (double)(1 / (3 * hi[i])) * (cj[i + 1, 0] - cj[i, 0]);
+
+        }
+
+        public void find_coefficient(double[] xi, double[] yi)
+        {
+            positions_path_on_map_using_spline.Clear();
+            if (xi.Length != yi.Length) return;
+            int number_point_spline = xi.Length;
+            double[] hi = new double[number_point_spline - 1];
+            for (int i = 0; i < number_point_spline - 1; i++)
+            {
+                hi[i] = xi[i + 1] - xi[i];
+            }
+            double[,] A_spline = new double[number_point_spline, number_point_spline];
+
+            A_spline[0, 0] = 1;
+            A_spline[number_point_spline - 1, number_point_spline - 1] = 1;
+            for (int i = 1; i < number_point_spline - 1; i++)
+            {
+                A_spline[i, i - 1] = hi[i - 1];
+                A_spline[i, i] = 2 * (hi[i - 1] + hi[i]);
+                A_spline[i, i + 1] = hi[i];
+            }
+            double[,] B_spline = new double[number_point_spline, 1];
+
+            for (int i = 1; i < number_point_spline - 1; i++)
+            {
+                B_spline[i, 0] = (3 / hi[i]) * (yi[i + 1] - yi[i]) - (3 / hi[i - 1]) * (yi[i] - yi[i - 1]);
+            }
+
+            // Coefficient vector cj
+
+            var cj = Accord.Math.Matrix.Solve(A_spline, B_spline, leastSquares: false);
+            // Coefficient vector bj:
+
+            double[,] bj = new double[number_point_spline - 1, 1];
+            for (int i = 0; i < number_point_spline - 1; i++)
+                bj[i, 0] = (1 / hi[i]) * (yi[i + 1] - yi[i]) - (double)hi[i] * (2 * cj[i, 0] + cj[i + 1, 0]) / 3;
+
+            //Coefficient vector dj
+            double[,] dj = new double[number_point_spline - 1, 1];
+            for (int i = 0; i < number_point_spline - 1; i++)
+                dj[i, 0] = (double)(1 / (3 * hi[i])) * (cj[i + 1, 0] - cj[i, 0]);
+
+            //draw path
+            double xj, yj;
+            for (int i = 0; i < xi.Length - 1; i++)
+            {
+                if(xi[i+1] >= xi[i])
+                    for(xj = xi[i]; xj < xi[i+1]; xj += (xi[i+1] - xi[i]) / 100)
+                    {
+                        yj = yi[i] + bj[i, 0] * (xj - xi[i]) + cj[i, 0] * (xj - xi[i]) * (xj - xi[i]) +
+                            dj[i, 0] * Math.Pow((xj - xi[i]), 3);
+                        positions_path_on_map_using_spline.Add(new BasicGeoposition() { Latitude = xj, Longitude = yj });//to turn on auto zoom mode
+                    }
+                else
+                {
+                    for (xj = xi[i]; xj > xi[i + 1]; xj -= (xi[i] - xi[i + 1]) / 100)
+                    {
+                        yj = yi[i] + bj[i, 0] * (xj - xi[i]) + cj[i, 0] * (xj - xi[i]) * (xj - xi[i]) +
+                            dj[i, 0] * Math.Pow((xj - xi[i]), 3);
+                        positions_path_on_map_using_spline.Add(new BasicGeoposition() { Latitude = xj, Longitude = yj });//to turn on auto zoom mode
+                    }
+                }
+            }
+        }
         //end of class
     }
 

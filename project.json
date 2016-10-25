@@ -1,6 +1,7 @@
 ﻿{
   "dependencies": {
     "Microsoft.NETCore.UniversalWindowsPlatform": "5.0.0",
+    "portable.accord.math": "3.0.2.50804",
     "winrtxamltoolkit": "2.0.0"
   },
   "frameworks": {

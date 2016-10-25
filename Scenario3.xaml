@@ -326,6 +326,7 @@
 
                                         </MenuFlyoutSubItem>
                                         <MenuFlyoutItem x:Name="bt_Exit" Text = "Exit" Click="bt_exit_Click"/>
+                                        <MenuFlyoutItem x:Name="bt_UploadPath" Text = "Upload Path" Click="bt_upload_path_hexa_angle_Click"/>
                                     </MenuFlyout>
                                 </Button.Flyout>
                             </Button>
