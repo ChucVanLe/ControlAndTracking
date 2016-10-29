@@ -206,6 +206,11 @@
     <Content Include="Assets\Speed_full.PNG" />
     <Content Include="Assets\Speed_Full_v2.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="GeoUtility">
+      <HintPath>C:\Users\41200\Downloads\GeoUtility\GeoUtility.dll</HintPath>
+    </Reference>
+  </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

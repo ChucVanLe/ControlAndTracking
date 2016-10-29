@@ -85,6 +85,8 @@ using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
 
 using Accord.Math;//solve matrix
+//https://geoutility.codeplex.com/
+using GeoUtility.GeoSystem;//convert lat, lon to utm, utm to lat, lon
 //************************************************
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
@@ -150,9 +152,40 @@ namespace PivotCS
             this.DataContext = this;
             Dis_Setup();
             init_timer_check_reply_from_flight_no_start(1000);
-            //test func
+            //test function
             //find_coefficient_a0a1a2a3(3, 10, 20, 15, 15, 60, 60, 88, 09);
             //TestSpline();
+            //test lat, lon to utm--ok 29/10/2016
+            //check at http://www.rcn.montana.edu/resources/converter.aspx
+            //check at https://www.uwgb.edu/dutchs/UsefulData/ConvertUTMNoOZ.HTM
+            double UTMN = 0, UTME = 0, gps_lat, gps_lon;
+            string utmZ;
+            char utmBand;
+            LatLongtoUTM(10.782199, 106.650370, out UTMN, out UTME, out utmZ, out utmBand);//ok
+            //utm to lat, lon
+            //ToLatLon_v2(UTMN, UTME, utmZ, out gps_lat, out gps_lon);
+            //ok
+            //ToLatLon_v2(7042000, 510000, "32V", out gps_lat, out gps_lon);
+            //ToLatLon(7042000, 510000, "32V");
+            //test();
+
+            //Transforming Latitude/ Longitude to UTM:
+            Geographic geo = new Geographic(8.12345, 50.56789);
+            UTM utm = (UTM)geo;
+            double east = utm.East;
+            double north = utm.North;
+            int zone = utm.Zone;
+            string band = utm.Band;
+
+            //Transforming MGRS/UTMRef to Latitude/Longitude:
+            MGRS mgrs = new MGRS(48, band, "MA", UTME, UTMN);
+            //UTM utm1 = new UTM(zone, band, east, north);
+            //UTM utm1 = new UTM(Convert.ToInt32(utmZ), utmBand.ToString(), UTME, UTMN);
+            UTM utm1 = new UTM(32, "V", 510000, 7042000);
+            Geographic geo1 = (Geographic)utm1;
+            double lon = geo1.Longitude;
+            double lat = geo1.Latitude;
+
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -4454,7 +4487,8 @@ namespace PivotCS
 
                     timer.Stop();
                     //turn on timer check error
-                    init_timer_check_reply_from_flight(500);//500ms
+                    init_timer_check_reply_from_flight(1000);//500ms
+                    status.Text = "Waiting...";
                 }
                 else
                 {
@@ -4532,7 +4566,8 @@ namespace PivotCS
 
                     //turn on timer check error
                     timer.Stop();
-                    init_timer_check_reply_from_flight(500);//500ms
+                    init_timer_check_reply_from_flight(1000);//500ms
+                    status.Text = "Waiting...";
                 }
                 else
                 {
@@ -4584,7 +4619,8 @@ namespace PivotCS
 
                     //turn on timer check error
                     timer.Stop();
-                    init_timer_check_reply_from_flight(500);//500ms
+                    init_timer_check_reply_from_flight(1000);//500ms
+                    status.Text = "Waiting...";
                 }
                 else
                 {
@@ -4636,7 +4672,8 @@ namespace PivotCS
 
                     //turn on timer check error
                     timer.Stop();
-                    init_timer_check_reply_from_flight(500);//2s
+                    init_timer_check_reply_from_flight(1000);//2s
+                    status.Text = "Waiting...";
                 }
                 else
                 {
@@ -4686,7 +4723,8 @@ namespace PivotCS
                     await UploadDataToFlight(data_need_tran);
                     //turn on timer check error
                     timer.Stop();
-                    init_timer_check_reply_from_flight(2000);//2s
+                    init_timer_check_reply_from_flight(3000);//2s
+                    status.Text = "Waiting...";
                 }
                 else
                 {
@@ -5092,7 +5130,56 @@ namespace PivotCS
         /// <param name="e"></param>
         private void bt_upload_path_hexa_angle_Click(object sender, RoutedEventArgs e)
         {
+            double a0 = Math.Tan(Convert.ToDouble(Data.Yaw) / 10);
+            double x0 = dLatGol;
+            double y0 = dLonGol;
+            double b0 = y0 - a0 * x0;
+            double distance = 50;
+            double x1M, x2M, y1M, y2M;
+            double denta0 = (x0 - a0 * (b0 - y0)) * (x0 - a0 * (b0 - y0)) - (1 + a0 * a0) * (x0 * x0 + (b0 - y0) * (b0 - y0) - distance * distance);
+            try
+            {
+                x1M = ((x0 - a0 * (b0 - y0)) + Math.Sqrt(denta0)) / (1 + a0 * a0);
+                x2M = ((x0 - a0 * (b0 - y0)) - Math.Sqrt(denta0)) / (1 + a0 * a0);
+                y1M = a0 * x1M + (b0 - y0);
+                y2M = a0 * x2M + (b0 - y0);
+                //reject 1 point using angle
+                if(angleFromCoordinate(x0, y0, x1M, y1M) == Convert.ToDouble(Data.Yaw) / 10)//receive x1M, y1M
+                {
+                    MapPolyline lineToRmove = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
 
+                    lineToRmove.Path = new Geopath(new List<BasicGeoposition>() {
+                            new BasicGeoposition() {Latitude = x0, Longitude = y0},
+                            //San Bay Tan Son Nhat
+                            new BasicGeoposition() {Latitude = x1M, Longitude = y1M}
+                            });
+
+                    lineToRmove.StrokeColor = Colors.Yellow;
+                    lineToRmove.StrokeThickness = 2;
+                    lineToRmove.StrokeDashed = false;//nét liền
+
+                    //myMap.MapElements.Remove(mapPolyline);
+                    myMap.MapElements.Add(lineToRmove);
+                }
+                else
+                {
+                    MapPolyline lineToRmove = new Windows.UI.Xaml.Controls.Maps.MapPolyline();
+
+                    lineToRmove.Path = new Geopath(new List<BasicGeoposition>() {
+                            new BasicGeoposition() {Latitude = x0, Longitude = y0},
+                            //San Bay Tan Son Nhat
+                            new BasicGeoposition() {Latitude = x2M, Longitude = y2M}
+                            });
+
+                    lineToRmove.StrokeColor = Colors.Yellow;
+                    lineToRmove.StrokeThickness = 2;
+                    lineToRmove.StrokeDashed = false;//nét liền
+
+                    //myMap.MapElements.Remove(mapPolyline);
+                    myMap.MapElements.Add(lineToRmove);
+                }
+            }
+            catch { }
         }
 
         /// <summary>
@@ -5422,6 +5509,210 @@ namespace PivotCS
                 }
             }
         }
+
+        /// <summary>
+        /// convert utm to lat, lon
+        /// </summary>
+        /// <param name="utmX"></param>
+        /// <param name="utmY"></param>
+        /// <param name="utmZone"></param>
+        public static void ToLatLon(double utmX, double utmY, string utmZone)
+        {
+            double latitude = 0;
+            double longitude = 0;
+
+            bool isNorthHemisphere = utmZone.Last() >= 'N';
+
+            var diflat = -0.00066286966871111111111111111111111111;
+            var diflon = -0.0003868060578;
+
+            var zone = int.Parse(utmZone.Remove(utmZone.Length - 1));
+            var c_sa = 6378137.000000;
+            var c_sb = 6356752.314245;
+            var e2 = Math.Pow((Math.Pow(c_sa, 2) - Math.Pow(c_sb, 2)), 0.5) / c_sb;
+            var e2cuadrada = Math.Pow(e2, 2);
+            var c = Math.Pow(c_sa, 2) / c_sb;
+            var x = utmX - 500000;
+            var y = isNorthHemisphere ? utmY : utmY - 10000000;
+
+            var s = ((zone * 6.0) - 183.0);
+            var lat = y / (6366197.724 * 0.9996); // Change c_sa for 6366197.724
+            var v = (c / Math.Pow(1 + (e2cuadrada * Math.Pow(Math.Cos(lat), 2)), 0.5)) * 0.9996;
+            var a = x / v;
+            var a1 = Math.Sin(2 * lat);
+            var a2 = a1 * Math.Pow((Math.Cos(lat)), 2);
+            var j2 = lat + (a1 / 2.0);
+            var j4 = ((3 * j2) + a2) / 4.0;
+            var j6 = (5 * j4 + a2 * Math.Pow((Math.Cos(lat)), 2)) / 3.0; // saque a2 de multiplicar por el coseno de lat y elevar al cuadrado
+            var alfa = (3.0 / 4.0) * e2cuadrada;
+            var beta = (5.0 / 3.0) * Math.Pow(alfa, 2);
+            var gama = (35.0 / 27.0) * Math.Pow(alfa, 3);
+            var bm = 0.9996 * c * (lat - alfa * j2 + beta * j4 - gama * j6);
+            var b = (y - bm) / v;
+            var epsi = ((e2cuadrada * Math.Pow(a, 2)) / 2.0) * Math.Pow((Math.Cos(lat)), 2);
+            var eps = a * (1 - (epsi / 3.0));
+            var nab = (b * (1 - epsi)) + lat;
+            var senoheps = (Math.Exp(eps) - Math.Exp(-eps)) / 2.0;
+            var delt = Math.Atan(senoheps / (Math.Cos(nab)));
+            var tao = Math.Atan(Math.Cos(delt) * Math.Tan(nab));
+
+            longitude = (delt / Math.PI) * 180 + s;
+            latitude = (((lat + (1 + e2cuadrada * Math.Pow(Math.Cos(lat), 2) - (3.0 / 2.0) * e2cuadrada * Math.Sin(lat) * Math.Cos(lat) * (tao - lat)) * (tao - lat))) / Math.PI) * 180; // era incorrecto el calculo
+
+            Console.WriteLine("Latitud: " + latitude.ToString() + "\nLongitud: " + longitude.ToString());
+
+        }
+
+        /// <summary>
+        /// convert utm to lat, lon
+        /// </summary>
+        /// <param name="utmX"></param>
+        /// <param name="utmY"></param>
+        /// <param name="utmZone"></param>
+        /// <param name="latitude"></param>
+        /// <param name="longitude"></param>
+        public static void ToLatLon_v2(double utmX, double utmY, string utmZone, out double latitude, out double longitude)
+        {
+            bool isNorthHemisphere = utmZone.Last() >= 'N';
+
+            var diflat = -0.00066286966871111111111111111111111111;
+            var diflon = -0.0003868060578;
+
+            var zone = int.Parse(utmZone.Remove(utmZone.Length - 1));
+            var c_sa = 6378137.000000;
+            var c_sb = 6356752.314245;
+            var e2 = Math.Pow((Math.Pow(c_sa, 2) - Math.Pow(c_sb, 2)), 0.5) / c_sb;
+            var e2cuadrada = Math.Pow(e2, 2);
+            var c = Math.Pow(c_sa, 2) / c_sb;
+            var x = utmX - 500000;
+            var y = isNorthHemisphere ? utmY : utmY - 10000000;
+
+            var s = ((zone * 6.0) - 183.0);
+            var lat = y / (c_sa * 0.9996);
+            var v = (c / Math.Pow(1 + (e2cuadrada * Math.Pow(Math.Cos(lat), 2)), 0.5)) * 0.9996;
+            var a = x / v;
+            var a1 = Math.Sin(2 * lat);
+            var a2 = a1 * Math.Pow((Math.Cos(lat)), 2);
+            var j2 = lat + (a1 / 2.0);
+            var j4 = ((3 * j2) + a2) / 4.0;
+            var j6 = ((5 * j4) + Math.Pow(a2 * (Math.Cos(lat)), 2)) / 3.0;
+            var alfa = (3.0 / 4.0) * e2cuadrada;
+            var beta = (5.0 / 3.0) * Math.Pow(alfa, 2);
+            var gama = (35.0 / 27.0) * Math.Pow(alfa, 3);
+            var bm = 0.9996 * c * (lat - alfa * j2 + beta * j4 - gama * j6);
+            var b = (y - bm) / v;
+            var epsi = ((e2cuadrada * Math.Pow(a, 2)) / 2.0) * Math.Pow((Math.Cos(lat)), 2);
+            var eps = a * (1 - (epsi / 3.0));
+            var nab = (b * (1 - epsi)) + lat;
+            var senoheps = (Math.Exp(eps) - Math.Exp(-eps)) / 2.0;
+            var delt = Math.Atan(senoheps / (Math.Cos(nab)));
+            var tao = Math.Atan(Math.Cos(delt) * Math.Tan(nab));
+
+            longitude = ((delt * (180.0 / Math.PI)) + s) + diflon;
+            latitude = ((lat + (1 + e2cuadrada * Math.Pow(Math.Cos(lat), 2) - (3.0 / 2.0) * e2cuadrada * Math.Sin(lat) * Math.Cos(lat) * (tao - lat)) * (tao - lat)) * (180.0 / Math.PI)) + diflat;
+        }
+
+        /// <summary>
+        /// lat, lon to utm
+        /// </summary>
+        /// <param name="Lat"></param>
+        /// <param name="Long"></param>
+        /// <param name="UTMNorthing"></param>
+        /// <param name="UTMEasting"></param>
+        /// <param name="Zone"></param>
+        void LatLongtoUTM(double Lat, double Long, out double UTMNorthing, out double UTMEasting, out string Zone, out char Band)
+        {
+            double deg2rad = (Math.PI / 180D);
+            double a = 6378137; //WGS84
+            double eccSquared = 0.00669438; //WGS84
+            double k0 = 0.9996;
+
+            double LongOrigin;
+            double eccPrimeSquared;
+            double N, T, C, A, M;
+
+            //Make sure the longitude is between -180.00 .. 179.9
+            double LongTemp = (Long + 180) - ((int)((Long + 180) / 360)) * 360 - 180; // -180.00 .. 179.9;
+
+            double LatRad = Lat * deg2rad;
+            double LongRad = LongTemp * deg2rad;
+            double LongOriginRad;
+            int ZoneNumber;
+
+            ZoneNumber = ((int)((LongTemp + 180) / 6)) + 1;
+
+            if (Lat >= 56.0 && Lat < 64.0 && LongTemp >= 3.0 && LongTemp < 12.0)
+                ZoneNumber = 32;
+
+            // Special zones for Svalbard
+            if (Lat >= 72.0 && Lat < 84.0)
+            {
+                if (LongTemp >= 0.0 && LongTemp < 9.0) ZoneNumber = 31;
+                else if (LongTemp >= 9.0 && LongTemp < 21.0) ZoneNumber = 33;
+                else if (LongTemp >= 21.0 && LongTemp < 33.0) ZoneNumber = 35;
+                else if (LongTemp >= 33.0 && LongTemp < 42.0) ZoneNumber = 37;
+            }
+            LongOrigin = (ZoneNumber - 1) * 6 - 180 + 3; //+3 puts origin in middle of zone
+            LongOriginRad = LongOrigin * deg2rad;
+
+            //compute the UTM Zone from the latitude and longitude
+            //Zone = ZoneNumber.ToString() + UTMLetterDesignator(Lat);
+            //test
+            Zone = ZoneNumber.ToString();
+            Band = UTMLetterDesignator(Lat);
+
+            eccPrimeSquared = (eccSquared) / (1 - eccSquared);
+
+            N = a / Math.Sqrt(1 - eccSquared * Math.Sin(LatRad) * Math.Sin(LatRad));
+            T = Math.Tan(LatRad) * Math.Tan(LatRad);
+            C = eccPrimeSquared * Math.Cos(LatRad) * Math.Cos(LatRad);
+            A = Math.Cos(LatRad) * (LongRad - LongOriginRad);
+
+            M = a * ((1 - eccSquared / 4 - 3 * eccSquared * eccSquared / 64 - 5 * eccSquared * eccSquared * eccSquared / 256) * LatRad
+            - (3 * eccSquared / 8 + 3 * eccSquared * eccSquared / 32 + 45 * eccSquared * eccSquared * eccSquared / 1024) * Math.Sin(2 * LatRad)
+            + (15 * eccSquared * eccSquared / 256 + 45 * eccSquared * eccSquared * eccSquared / 1024) * Math.Sin(4 * LatRad)
+            - (35 * eccSquared * eccSquared * eccSquared / 3072) * Math.Sin(6 * LatRad));
+
+            UTMEasting = (double)(k0 * N * (A + (1 - T + C) * A * A * A / 6
+            + (5 - 18 * T + T * T + 72 * C - 58 * eccPrimeSquared) * A * A * A * A * A / 120)
+            + 500000.0);
+
+            UTMNorthing = (double)(k0 * (M + N * Math.Tan(LatRad) * (A * A / 2 + (5 - T + 9 * C + 4 * C * C) * A * A * A * A / 24
+            + (61 - 58 * T + T * T + 600 * C - 330 * eccPrimeSquared) * A * A * A * A * A * A / 720)));
+            if (Lat < 0)
+                UTMNorthing += 10000000.0; //10000000 meter offset for southern hemisphere
+        }
+
+
+        private char UTMLetterDesignator(double Lat)
+        {
+            char LetterDesignator;
+
+            if ((84 >= Lat) && (Lat >= 72)) LetterDesignator = 'X';
+            else if ((72 > Lat) && (Lat >= 64)) LetterDesignator = 'W';
+            else if ((64 > Lat) && (Lat >= 56)) LetterDesignator = 'V';
+            else if ((56 > Lat) && (Lat >= 48)) LetterDesignator = 'U';
+            else if ((48 > Lat) && (Lat >= 40)) LetterDesignator = 'T';
+            else if ((40 > Lat) && (Lat >= 32)) LetterDesignator = 'S';
+            else if ((32 > Lat) && (Lat >= 24)) LetterDesignator = 'R';
+            else if ((24 > Lat) && (Lat >= 16)) LetterDesignator = 'Q';
+            else if ((16 > Lat) && (Lat >= 8)) LetterDesignator = 'P';
+            else if ((8 > Lat) && (Lat >= 0)) LetterDesignator = 'N';
+            else if ((0 > Lat) && (Lat >= -8)) LetterDesignator = 'M';
+            else if ((-8 > Lat) && (Lat >= -16)) LetterDesignator = 'L';
+            else if ((-16 > Lat) && (Lat >= -24)) LetterDesignator = 'K';
+            else if ((-24 > Lat) && (Lat >= -32)) LetterDesignator = 'J';
+            else if ((-32 > Lat) && (Lat >= -40)) LetterDesignator = 'H';
+            else if ((-40 > Lat) && (Lat >= -48)) LetterDesignator = 'G';
+            else if ((-48 > Lat) && (Lat >= -56)) LetterDesignator = 'F';
+            else if ((-56 > Lat) && (Lat >= -64)) LetterDesignator = 'E';
+            else if ((-64 > Lat) && (Lat >= -72)) LetterDesignator = 'D';
+            else if ((-72 > Lat) && (Lat >= -80)) LetterDesignator = 'C';
+            else LetterDesignator = 'Z'; //Latitude is outside the UTM limits
+            return LetterDesignator;
+        }
+
+
         //end of class
     }
 
@@ -5469,4 +5760,20 @@ namespace PivotCS
         public string Title { get; set; }
         public Type ClassType { get; set; }
     }
+
+    public class Ellipsoid
+    {
+        //Attributes
+        public string ellipsoidName;
+        public double EquatorialRadius;
+        public double eccentricitySquared;
+
+        public Ellipsoid(string name, double radius, double ecc)
+        {
+            ellipsoidName = name;
+            EquatorialRadius = radius;
+            eccentricitySquared = ecc;
+        }
+    };
+
 }
